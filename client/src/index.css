@@ -1,38 +1,45 @@
+/* 1. استيراد Tailwind */
+@import "tailwindcss";
+
+/* 2. الأنماط العامة */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* متغيرات الألوان للوضع العادي (فاتح) */
+  --bg-color: #ffffff;
+  --text-color: #213547;
 }
 
+/* 3. عند وجود الكلاس dark على html */
+html.dark {
+  --bg-color: #1a1a1a;
+  --text-color: rgba(255, 255, 255, 0.87);
+}
+
+/* 4. تطبيق المتغيرات على body و #root معاً */
+body,
+#root {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  /* transition: background-color 0.3s ease, color 0.3s ease; */
+}
+
+/* 5. (اختياري) تحسين ظهور الروابط والأزرار في الوضعين */
 a {
-  font-weight: 500;
   color: #646cff;
   text-decoration: inherit;
 }
 a:hover {
   color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
 }
 
 button {
@@ -54,15 +61,14 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* تعديل ألوان الروابط والأزرار في الوضع المظلم */
+html.dark a {
+  color: #646cff;
+}
+html.dark a:hover {
+  color: #747bff;
+}
+html.dark button {
+  background-color: #1a1a1a;
+  color: #fff;
 }

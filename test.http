@@ -1,0 +1,384 @@
+# ### ============================================================
+# ### 📦 API TEST FILE - REST Client
+# ### ============================================================
+# ### BASE URL: http://localhost:5000/api
+# ### ============================================================
+
+@baseUrl = http://localhost:5000/api
+ @token = {{signIn.response.body.data.token}}
+ @productId={{product.response.body.data.id}}
+# ### ============================================================
+# ### 🔐 1. AUTH ROUTES
+# ### ============================================================
+
+# ### 1.1 Register New User
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Hashem",
+  "email": "hashem19851985@gmail.com",
+  "password": "abcde123456"
+}
+
+# ### 1.2 Sign In
+# # @name signIn
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "hashem19851985@gmail.com",
+  "password": "abcde12345"
+}
+
+# ### 1.3 Get Profile (Protected)
+# GET {{baseUrl}}/auth/profile
+# Authorization: Bearer {{token}}
+
+# ### 1.4 Update Profile (Protected)
+# PATCH {{baseUrl}}/auth/profile
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "name": "Updated Test User",
+#   "image": "https://ui-avatars.com/api/?name=Test"
+# }
+
+# ### 1.5 Change Password (Protected)
+# POST {{baseUrl}}/auth/change-password
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "currentPassword": "123456",
+#   "newPassword": "1234567"
+# }
+
+# ### ============================================================
+# ### 📂 2. CATEGORY ROUTES
+# ### ============================================================
+
+# ### 2.1 Get All Categories
+# GET {{baseUrl}}/categories
+
+# ### 2.2 Create Category (Admin Only)
+POST {{baseUrl}}/categories
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Phones"
+}
+
+# ### 2.3 Create Another Category
+# POST {{baseUrl}}/categories
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "name": "Accessories"
+# }
+
+# ### ============================================================
+# ### 🛍️ 3. PRODUCT ROUTES
+# ### ============================================================
+
+# ### 3.1 Get All Products
+ GET {{baseUrl}}/product/top-selling
+
+# ### 3.2 Get Product by Slug
+GET http://localhost:5000/api/products/top-selling
+
+# ### 3.3 Create Product (Admin Only)
+# # @name product
+POST {{baseUrl}}/products
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbXNtODNmNzIwMDAwdXV4NHdrbXV1NG90IiwiaWF0IjoxNzg2MzY4OTAzLCJleHAiOjE3ODY5NzM3MDN9.KYn4J9xJ38R0g_KVrs4AdXD3UtZzn7u75e80Zvgfbkw
+Content-Type: application/json
+
+{
+  "title": "iPhone 16 pro",
+  "description": "Latest iPhone with titanium frame and A17 Pro chip",
+  "categoryId": "cmsjbb7i10001uuro4smf0amn",
+  "images": [
+    {
+      "url": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80 ",
+      "alt": "iPhone 16 Pro Front",
+      "isPrimary": true
+    }
+  ],
+  "variants": [
+    {
+      "sku": "IPH16-128",
+      "price": 955.99,
+      "stock": 10,
+      "color": "Black",
+      "size": "128GB"
+    },
+    {
+      "sku": "IPH16-256",
+      "price": 1000.99,
+      "stock": 5,
+      "color": "Black",
+      "size": "256GB"
+    }
+  ]
+}
+
+# ### 3.4 Update Product (Admin Only)
+# PATCH {{baseUrl}}/products/{{productId}}
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "title": "iPhone 17 Pro Max"
+# }
+
+# ### 3.5 Delete Product (Admin Only)
+# DELETE {{baseUrl}}/products/{{productId}}
+# Authorization: Bearer {{token}}
+
+# ### ============================================================
+# ### 🛒 4. CART ROUTES
+# ### ============================================================
+
+# ### 4.1 Get Cart (Protected)
+# GET {{baseUrl}}/cart
+# Authorization: Bearer {{token}}
+
+# ### 4.2 Add Item to Cart (Protected)
+# POST {{baseUrl}}/cart
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "productId":"cmr6ekb5h000uuuegkkzkkpx5",
+#   "variantId": "cmr6ekb5h000xuuegtngsfhl7",
+#   "quantity": 2
+# }
+
+# ### 4.3 Update Cart Item Quantity (Protected)
+# PATCH {{baseUrl}}/cart/{{cartItemId}}
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "quantity": 3
+# }
+
+# ### 4.4 Remove Item from Cart (Protected)
+# DELETE {{baseUrl}}/cart/{{cartItemId}}
+# Authorization: Bearer {{token}}
+
+# ### 4.5 Clear Cart (Protected)
+# DELETE {{baseUrl}}/cart
+# Authorization: Bearer {{token}}
+
+# ### ============================================================
+# ### 📦 5. ORDER ROUTES
+# ### ============================================================
+
+# ### 5.1 Create Order (Protected)
+# POST {{baseUrl}}/orders
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "shippingAddress": {
+#     "street": "123 Main Street",
+#     "city": "Damascus",
+#     "postalCode": "12345",
+#     "country": "Syria"
+#   },
+#   "paymentMethod": "CASH"
+# }
+
+# ### 5.2 Get My Orders (Protected)
+# GET {{baseUrl}}/orders
+# Authorization: Bearer {{token}}
+
+# ### 5.3 Get Order by ID (Protected)
+# GET {{baseUrl}}/orders/{{orderId}}
+# Authorization: Bearer {{token}}
+
+# ### 5.4 Get All Orders (Admin Only)
+# GET {{baseUrl}}/orders/admin/all
+# Authorization: Bearer {{token}}
+
+# ### 5.5 Update Order Status (Admin Only)
+# PATCH {{baseUrl}}/orders/admin/{{orderId}}/status
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "status": "SHIPPED"
+# }
+
+# ### ============================================================
+# ### ❤️ 6. WISHLIST ROUTES
+# ### ============================================================
+
+# ### 6.1 Get Wishlist (Protected)
+GET http://localhost:5000/api/wishlist
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbXNtODNmNzIwMDAwdXV4NHdrbXV1NG90IiwiaWF0IjoxNzg2MzY4OTAzLCJleHAiOjE3ODY5NzM3MDN9.KYn4J9xJ38R0g_KVrs4AdXD3UtZzn7u75e80Zvgfbkw
+
+
+
+
+POST http://localhost:5000/api/coupons
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbXNtODNmNzIwMDAwdXV4NHdrbXV1NG90IiwiaWF0IjoxNzg3OTAxNzI5LCJleHAiOjE3ODg1MDY1Mjl9.g56hBPf75hYEa_ueCTdMwBu2sc7mO0yu-RjJ_PrFYec
+Content-Type: application/json
+
+{ "code": "SUMMER", "description": "25%", "discountType": "PERCENTAGE", "discountValue": 10, "minOrderValue": 100, "maxDiscount": 50, "startsAt": "Date Fri Aug 28 2026 03:00:00 GMT+0300 (Arabian Standard Time)", "expiresAt": "Date Fri Sep 04 2026 03:00:00 GMT+0300 (Arabian Standard Time)", "usageLimit": 100, "isActive": true }
+
+
+# ### 6.2 Add to Wishlist (Protected)
+# POST {{baseUrl}}/wishlist
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "productId": "1"
+# }
+
+# ### 6.3 Check if Product is in Wishlist (Protected)
+# GET {{baseUrl}}/wishlist/check/1
+# Authorization: Bearer {{token}}
+
+# ### 6.4 Remove from Wishlist (Protected)
+# DELETE {{baseUrl}}/wishlist/1
+# Authorization: Bearer {{token}}
+
+# ### 6.5 Clear Wishlist (Protected)
+# DELETE {{baseUrl}}/wishlist
+# Authorization: Bearer {{token}}
+
+# ### ============================================================
+# ### ⭐ 7. REVIEW ROUTES
+# ### ============================================================
+
+# ### 7.1 Get Product Reviews (Public)
+# GET {{baseUrl}}/reviews/product/1
+
+# ### 7.2 Create Review (Protected)
+# POST {{baseUrl}}/reviews
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "productId": "1",
+#   "rating": 5,
+#   "comment": "Excellent product! Highly recommended."
+# }
+
+# ### 7.3 Get My Reviews (Protected)
+# GET {{baseUrl}}/reviews/me
+# Authorization: Bearer {{token}}
+
+# ### 7.4 Get Review by ID (Protected)
+# GET {{baseUrl}}/reviews/{{reviewId}}
+# Authorization: Bearer {{token}}
+
+# ### 7.5 Update Review (Protected)
+# PATCH {{baseUrl}}/reviews/{{reviewId}}
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "rating": 4,
+#   "comment": "Updated comment."
+# }
+
+# ### 7.6 Delete Review (Protected)
+# DELETE {{baseUrl}}/reviews/{{reviewId}}
+# Authorization: Bearer {{token}}
+
+# ### 7.7 Get All Reviews (Admin Only)
+# GET {{baseUrl}}/reviews/admin/all
+# Authorization: Bearer {{token}}
+
+# ### 7.8 Delete Review as Admin (Admin Only)
+# DELETE {{baseUrl}}/reviews/admin/{{reviewId}}
+# Authorization: Bearer {{token}}
+
+# ### ============================================================
+# ### 👤 8. USER ROUTES
+# ### ============================================================
+
+# ### 8.1 Get Current User Profile (Protected)
+# GET {{baseUrl}}/users/me
+# Authorization: Bearer {{token}}
+
+# ### 8.2 Update Current User Profile (Protected)
+# PATCH {{baseUrl}}/users/me
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "name": "New Name",
+#   "image": "https://ui-avatars.com/api/?name=New"
+# }
+
+# ### 8.3 Delete Current User (Protected)
+# DELETE {{baseUrl}}/users/me
+# Authorization: Bearer {{token}}
+
+# ### 8.4 Get All Users (Admin Only)
+# GET {{baseUrl}}/users/admin/all?page=1&limit=10
+# Authorization: Bearer {{token}}
+
+# ### 8.5 Get User by ID (Admin Only)
+# GET {{baseUrl}}/users/admin/{{userId}}
+# Authorization: Bearer {{token}}
+
+# ### 8.6 Update User by ID (Admin Only)
+# PATCH {{baseUrl}}/users/admin/{{userId}}
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "name": "Admin Updated",
+#   "email": "admin@example.com"
+# }
+
+# ### 8.7 Update User Role (Admin Only)
+# PATCH {{baseUrl}}/users/admin/{{userId}}/role
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+
+# {
+#   "role": "ADMIN"
+# }
+
+# ### 8.8 Delete User by ID (Admin Only)
+# DELETE {{baseUrl}}/users/admin/{{userId}}
+# Authorization: Bearer {{token}}
+
+# ### ============================================================
+# ### 📊 9. ADMIN ROUTES
+# ### ============================================================
+
+# ### 9.1 Get Dashboard Stats (Admin Only)
+# GET {{baseUrl}}/admin/dashboard
+# Authorization: Bearer {{token}}
+
+# ### 9.2 Get Sales Analytics (Admin Only)
+# GET {{baseUrl}}/admin/analytics/sales?days=7
+# Authorization: Bearer {{token}}
+
+# ### ============================================================
+# ### 🏥 10. HEALTH CHECK
+# ### ============================================================
+
+# ### 10.1 Server Health Check
+# GET {{baseUrl}}/health
+
+# ### ============================================================
+# ### 📝 NOTES:
+# ### ============================================================
+# ### 1. استخدم المتغيرات ({{token}}, {{productId}}, {{orderId}}, etc.)
+# ###    عن طريق تعيينها من الاستجابات السابقة.
+# ### 2. تأكد من تشغيل السيرفر على http://localhost:5000
+# ### 3. بعض المسارات تتطلب صلاحيات ADMIN، لذا قم بتسجيل الدخول
+# ###    كـ admin@store.com / admin123
+# ### ============================================================

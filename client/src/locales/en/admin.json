@@ -1,0 +1,8 @@
+{
+  "lowStockAlerts": "Low Stock Alerts",
+  "threshold": "Threshold",
+  "allStockHealthy": "All products are well stocked",
+  "replenish": "Replenish",
+  "remaining": "Remaining",
+  "sku": "SKU"
+}

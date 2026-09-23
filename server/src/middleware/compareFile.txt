@@ -1,0 +1,26 @@
+// src/routes/auth.routes.ts
+
+import { Router } from "express";
+import {
+  signUp,
+  signIn,
+  getProfileHandler,
+  updateProfileHandler,
+  changePasswordHandler,
+} from "../controllers/auth.controller";
+import { authMiddleware } from "../middleware/auth.middleware";
+import { validate } from "../middleware/validate.middleware";
+import { signUpSchema, signInSchema, updateProfileSchema, changePasswordSchema } from "../validators/auth.validator";
+
+const router = Router();
+
+// ✅ مسارات عامة (لا تحتاج مصادقة) مع التحقق من البيانات
+router.post("/signup", validate(signUpSchema), signUp);
+router.post("/signin", validate(signInSchema), signIn);
+
+// ✅ مسارات محمية (تتطلب مصادقة) مع التحقق من البيانات
+router.get("/profile", authMiddleware, getProfileHandler);
+router.patch("/profile", authMiddleware, validate(updateProfileSchema), updateProfileHandler);
+router.post("/change-password", authMiddleware, validate(changePasswordSchema), changePasswordHandler);
+
+export default router;
