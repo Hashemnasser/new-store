@@ -5,6 +5,7 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ interface CheckoutFormProps {
 export const CheckoutForm = ({ orderId }: CheckoutFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { clearItems } = useCartStore();
   const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +51,15 @@ export const CheckoutForm = ({ orderId }: CheckoutFormProps) => {
 
       // ✅ 1. فرّغ السلة في Zustand Store (فوراً في الواجهة)
       clearItems();
+
+      // ✅ 2. حدّث React Query Cache
+      queryClient.setQueryData(["cart"], {
+        id: "",
+        userId: "",
+        items: [],
+        total: 0,
+        itemCount: 0,
+      });
 
       // ✅ 3. انتقل إلى صفحة النجاح
       navigate(ROUTES.CHECKOUT_SUCCESS, { state: { orderId } });
