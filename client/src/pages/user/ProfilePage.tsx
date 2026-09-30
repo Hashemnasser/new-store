@@ -42,7 +42,7 @@ export const ProfilePage = () => {
     handleSubmit,
     watch,
     formState: { errors, isDirty },
-    setValue,
+    // setValue,
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {

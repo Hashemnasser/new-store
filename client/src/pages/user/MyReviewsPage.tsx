@@ -165,11 +165,7 @@ export const MyReviewsPage = () => {
   } | null>(null);
 
   // ✅ تحويل البيانات إلى مصفوفة (حماية)
-  const reviewList: Review[] = Array.isArray(reviews)
-    ? reviews
-    : Array.isArray(reviews?.data)
-    ? reviews.data
-    : [];
+  const reviewList: Review[] = Array.isArray(reviews) ? reviews : [];
 
   // ✅ دالة حذف التقييم
   const handleDelete = (reviewId: string) => {

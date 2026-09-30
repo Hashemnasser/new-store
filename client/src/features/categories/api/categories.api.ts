@@ -10,7 +10,9 @@ import type { Category } from "../types/category.types";
 export const categoriesApi = {
   // جلب جميع التصنيفات
   getAll: (): Promise<Category[]> => {
-    return http.get("/categories");
+    return http
+      .get<{ success: boolean; data: Category[] }>("/categories")
+      .then((res) => res.data);
   },
 
   // إنشاء تصنيف جديد (للمدير فقط)

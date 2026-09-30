@@ -48,7 +48,9 @@ export const reviewsApi = {
 
   // جلب جميع التقييمات (للمدير)
   getAllReviews: (): Promise<Review[]> => {
-    return http.get<Review[]>("/reviews/admin/all");
+    return http
+      .get<{ success: boolean; data: Review[] }>("/reviews/admin/all")
+      .then((res) => res.data);
   },
 
   // حذف تقييم (للمدير)

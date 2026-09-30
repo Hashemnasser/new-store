@@ -49,9 +49,9 @@ export const HomePage = () => {
   const ProductGrid = ({
     products,
     loading,
-    title,
-    linkText = "عرض الكل",
-  }: any) => {
+  }: // title,
+  // linkText = "عرض الكل",
+  any) => {
     if (loading) {
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

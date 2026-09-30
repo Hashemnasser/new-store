@@ -54,8 +54,8 @@ export const useWishlist = () => {
 
   // ✅ التحقق من وجود المنتج في القائمة (مع التحقق من وجود wishlist و items)
   const checkInWishlist = (productId: string): boolean => {
-    if (!wishlist || !wishlist.data.items) return false;
-    return wishlist.data.items.some(
+    if (!wishlist?.items) return false;
+    return wishlist.items.some(
       (item: WishlistItem) => item.productId === productId
     );
   };
@@ -75,7 +75,7 @@ export const useWishlist = () => {
   return {
     // البيانات
     wishlist,
-    items: wishlist?.data?.items || [],
+    items: wishlist?.items || [],
     isLoading,
     error,
 

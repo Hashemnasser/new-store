@@ -40,14 +40,13 @@ export const ProductPage = () => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   const product = data;
+
   const { data: reviewsData, refetch: refetchReviews } = useProductReviews(
     product?.id || ""
   );
   const { user } = useAuth();
 
-  const reviews: Review[] = Array.isArray(reviewsData?.data)
-    ? reviewsData?.data
-    : [];
+  const reviews: Review[] = Array.isArray(reviewsData) ? reviewsData : [];
 
   const userReview = reviews.find((r) => r.userId === user?.id);
   const hasReviewed = !!userReview;
@@ -80,7 +79,8 @@ export const ProductPage = () => {
       removeFromWishlist(product.id);
       toast.success("تم إزالة المنتج من قائمة الرغبات");
     } else {
-      addToWishlist(product.id);
+      const productId = product.id;
+      addToWishlist({ productId });
       toast.success("تم إضافة المنتج إلى قائمة الرغبات");
     }
   };

@@ -1,5 +1,6 @@
 // src/app/router/index.tsx
 
+import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { AdminGuard } from "../guards/AdminGuard";
 import { AuthGuard } from "../guards/AuthGuard";
@@ -7,49 +8,166 @@ import { GuestGuard } from "../guards/GuestGuard";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { DashboardLayout } from "../layouts/DashboardLayout";
 import { MainLayout } from "../layouts/MainLayout";
-
-// 📄 استيراد الصفحات العامة
-import { LoginPage } from "../../pages/auth/LoginPage";
-import { RegisterPage } from "../../pages/auth/RegisterPage";
-import { HomePage } from "../../pages/home/HomePage";
-import { NotFoundPage } from "../../pages/not-found/NotFoundPage";
-import { ProductPage } from "../../pages/product/ProductPage";
-import { ProductsPage } from "../../pages/products/ProductsPage";
-
-// 📄 استيراد صفحات المستخدم (Protected)
-import { CartPage } from "../../pages/cart/CartPage";
-import { CheckoutPage } from "../../pages/checkout/CheckoutPage";
-import { SuccessPage } from "../../pages/checkout/SuccessPage";
-import { OrdersPage } from "../../pages/user/OrdersPage";
-import { WishlistPage } from "../../pages/user/WishlistPage";
-
-// 📄 استيراد صفحات المدير (Admin)
-import { AdminDashboardPage } from "../../pages/admin/DashboardPage";
-import { AdminOrdersPage } from "../../pages/admin/OrdersPage";
-import { AdminProductsPage } from "../../pages/admin/ProductsPage";
-import { AdminReviewsPage } from "../../pages/admin/ReviewsPage";
-import { AdminUsersPage } from "../../pages/admin/UsersPage";
-
-// 🔗 استيراد ثوابت المسارات
-import { AboutPage } from "../../pages/about/AboutPage";
-import { AdminCouponsPage } from "../../pages/admin/AdminCouponsPage";
-import { AdminSettingsPage } from "../../pages/admin/AdminSettingsPage";
-import { CategoriesPage } from "../../pages/admin/CategoriesPage";
-import { ProductFormPage } from "../../pages/admin/ProductFormPage";
-import { ForgotPasswordPage } from "../../pages/auth/ForgotPasswordPage";
-import { ResetPasswordPage } from "../../pages/auth/ResetPasswordPage";
-import { CheckoutFailedPage } from "../../pages/checkout/CheckoutFailedPage";
-import { ContactPage } from "../../pages/contact/ContactPage";
-import { MyReviewsPage } from "../../pages/user/MyReviewsPage";
-import { OrderDetailsPage } from "../../pages/user/OrderDetailsPage";
-import { ProfilePage } from "../../pages/user/ProfilePage";
-import { SettingsPage } from "../../pages/user/SettingsPage";
 import { ROUTES } from "./route.constants";
 
+// ============================================================
+// 🌐 الصفحات العامة
+// ============================================================
+const HomePage = lazy(() =>
+  import("../../pages/home/HomePage").then((m) => ({ default: m.HomePage }))
+);
+const ProductsPage = lazy(() =>
+  import("../../pages/products/ProductsPage").then((m) => ({
+    default: m.ProductsPage,
+  }))
+);
+const ProductPage = lazy(() =>
+  import("../../pages/product/ProductPage").then((m) => ({
+    default: m.ProductPage,
+  }))
+);
+const AboutPage = lazy(() =>
+  import("../../pages/about/AboutPage").then((m) => ({ default: m.AboutPage }))
+);
+const ContactPage = lazy(() =>
+  import("../../pages/contact/ContactPage").then((m) => ({
+    default: m.ContactPage,
+  }))
+);
+const NotFoundPage = lazy(() =>
+  import("../../pages/not-found/NotFoundPage").then((m) => ({
+    default: m.NotFoundPage,
+  }))
+);
+
+// ============================================================
+// 🔐 صفحات المصادقة
+// ============================================================
+const LoginPage = lazy(() =>
+  import("../../pages/auth/LoginPage").then((m) => ({ default: m.LoginPage }))
+);
+const RegisterPage = lazy(() =>
+  import("../../pages/auth/RegisterPage").then((m) => ({
+    default: m.RegisterPage,
+  }))
+);
+const ForgotPasswordPage = lazy(() =>
+  import("../../pages/auth/ForgotPasswordPage").then((m) => ({
+    default: m.ForgotPasswordPage,
+  }))
+);
+const ResetPasswordPage = lazy(() =>
+  import("../../pages/auth/ResetPasswordPage").then((m) => ({
+    default: m.ResetPasswordPage,
+  }))
+);
+
+// ============================================================
+// 👤 صفحات المستخدم (Protected)
+// ============================================================
+const CartPage = lazy(() =>
+  import("../../pages/cart/CartPage").then((m) => ({ default: m.CartPage }))
+);
+const CheckoutPage = lazy(() =>
+  import("../../pages/checkout/CheckoutPage").then((m) => ({
+    default: m.CheckoutPage,
+  }))
+);
+const SuccessPage = lazy(() =>
+  import("../../pages/checkout/SuccessPage").then((m) => ({
+    default: m.SuccessPage,
+  }))
+);
+const CheckoutFailedPage = lazy(() =>
+  import("../../pages/checkout/CheckoutFailedPage").then((m) => ({
+    default: m.CheckoutFailedPage,
+  }))
+);
+const OrdersPage = lazy(() =>
+  import("../../pages/user/OrdersPage").then((m) => ({
+    default: m.OrdersPage,
+  }))
+);
+const OrderDetailsPage = lazy(() =>
+  import("../../pages/user/OrderDetailsPage").then((m) => ({
+    default: m.OrderDetailsPage,
+  }))
+);
+const WishlistPage = lazy(() =>
+  import("../../pages/user/WishlistPage").then((m) => ({
+    default: m.WishlistPage,
+  }))
+);
+const ProfilePage = lazy(() =>
+  import("../../pages/user/ProfilePage").then((m) => ({
+    default: m.ProfilePage,
+  }))
+);
+const SettingsPage = lazy(() =>
+  import("../../pages/user/SettingsPage").then((m) => ({
+    default: m.SettingsPage,
+  }))
+);
+const MyReviewsPage = lazy(() =>
+  import("../../pages/user/MyReviewsPage").then((m) => ({
+    default: m.MyReviewsPage,
+  }))
+);
+
+// ============================================================
+// 🛠️ صفحات المدير (Admin)
+// ============================================================
+const AdminDashboardPage = lazy(() =>
+  import("../../pages/admin/DashboardPage").then((m) => ({
+    default: m.AdminDashboardPage,
+  }))
+);
+const AdminProductsPage = lazy(() =>
+  import("../../pages/admin/ProductsPage").then((m) => ({
+    default: m.AdminProductsPage,
+  }))
+);
+const AdminOrdersPage = lazy(() =>
+  import("../../pages/admin/OrdersPage").then((m) => ({
+    default: m.AdminOrdersPage,
+  }))
+);
+const AdminUsersPage = lazy(() =>
+  import("../../pages/admin/UsersPage").then((m) => ({
+    default: m.AdminUsersPage,
+  }))
+);
+const AdminReviewsPage = lazy(() =>
+  import("../../pages/admin/ReviewsPage").then((m) => ({
+    default: m.AdminReviewsPage,
+  }))
+);
+const AdminSettingsPage = lazy(() =>
+  import("../../pages/admin/AdminSettingsPage").then((m) => ({
+    default: m.AdminSettingsPage,
+  }))
+);
+const AdminCouponsPage = lazy(() =>
+  import("../../pages/admin/AdminCouponsPage").then((m) => ({
+    default: m.AdminCouponsPage,
+  }))
+);
+const CategoriesPage = lazy(() =>
+  import("../../pages/admin/CategoriesPage").then((m) => ({
+    default: m.CategoriesPage,
+  }))
+);
+const ProductFormPage = lazy(() =>
+  import("../../pages/admin/ProductFormPage").then((m) => ({
+    default: m.ProductFormPage,
+  }))
+);
+
+// ============================================================
+// 🚦 الراوتر
+// ============================================================
 export const router = createBrowserRouter([
-  // ============================================================
-  // 🌐 المسارات العامة (لا تحتاج مصادقة)
-  // ============================================================
+  // 🌐 المسارات العامة
   {
     path: ROUTES.HOME,
     element: <MainLayout />,
@@ -57,14 +175,12 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: ROUTES.PRODUCTS, element: <ProductsPage /> },
       { path: "product/:slug", element: <ProductPage /> },
-      { path: ROUTES.ABOUT, element: <AboutPage /> }, // ✅ جديد
+      { path: ROUTES.ABOUT, element: <AboutPage /> },
       { path: ROUTES.CONTACT, element: <ContactPage /> },
     ],
   },
 
-  // ============================================================
-  // 🔐 مسارات المصادقة (مع GuestGuard - تمنع الوصول إذا كان مسجلاً)
-  // ============================================================
+  // 🔐 المصادقة
   {
     element: <GuestGuard />,
     children: [
@@ -83,9 +199,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ============================================================
-  // 🛡️ المسارات المحمية (مع AuthGuard)
-  // ============================================================
+  // 👤 المستخدم
   {
     element: <AuthGuard />,
     children: [
@@ -99,7 +213,6 @@ export const router = createBrowserRouter([
         element: <MainLayout />,
         children: [{ index: true, element: <ProfilePage /> }],
       },
-
       {
         path: ROUTES.WISHLIST,
         element: <MainLayout />,
@@ -115,7 +228,7 @@ export const router = createBrowserRouter([
         element: <MainLayout />,
         children: [
           { index: true, element: <OrdersPage /> },
-          { path: ":id", element: <OrderDetailsPage /> }, // ✅ المسار الجديد
+          { path: ":id", element: <OrderDetailsPage /> },
         ],
       },
       {
@@ -141,9 +254,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ============================================================
-  // 🔐 مسارات المدير (مع AdminGuard)
-  // ============================================================
+  // 🛠️ المدير
   {
     element: <AdminGuard />,
     children: [
@@ -152,29 +263,21 @@ export const router = createBrowserRouter([
         element: <DashboardLayout />,
         children: [
           { index: true, element: <AdminDashboardPage /> },
-          {
-            path: "categories",
-            element: <CategoriesPage />,
-          },
+          { path: "categories", element: <CategoriesPage /> },
           { path: "products", element: <AdminProductsPage /> },
           { path: "orders", element: <AdminOrdersPage /> },
           { path: "users", element: <AdminUsersPage /> },
           { path: "reviews", element: <AdminReviewsPage /> },
-          { path: "product/create", element: <ProductFormPage /> }, // ✅ إضافة هذا المسار
-          {
-            path: "product/:slug/edit", // ✅ استخدام slug بدلاً من id
-            element: <ProductFormPage />,
-          },
-          { path: "settings", element: <AdminSettingsPage /> }, // ✅ جديد
-          { path: "coupons", element: <AdminCouponsPage /> }, // ✅ مسار إدارة الكوبونات
+          { path: "product/create", element: <ProductFormPage /> },
+          { path: "product/:slug/edit", element: <ProductFormPage /> },
+          { path: "settings", element: <AdminSettingsPage /> },
+          { path: "coupons", element: <AdminCouponsPage /> },
         ],
       },
     ],
   },
 
-  // ============================================================
-  // 🚫 صفحة غير موجودة (404)
-  // ============================================================
+  // 🚫 404
   {
     path: "*",
     element: <NotFoundPage />,

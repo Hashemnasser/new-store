@@ -20,6 +20,33 @@ import {
 import type { Category } from "../../types/common.types";
 
 // ============================================================
+// ✅ أنواع خاصة بالفورم (كل القيم نصوص لأن حقول الإدخال تُرجع string)
+// ============================================================
+interface FormImage {
+  url: string;
+  alt: string;
+  isPrimary: boolean;
+}
+
+interface FormVariant {
+  sku: string;
+  price: string;
+  stock: string;
+  color: string;
+  size: string;
+}
+
+interface FormData {
+  title: string;
+  description: string;
+  categoryId: string;
+  discountPercent: string;
+  images: FormImage[];
+  variants: FormVariant[];
+  featured: boolean;
+}
+
+// ============================================================
 // 🧩 مكون المودال (يُعرض عبر Portal)
 // ============================================================
 
@@ -135,12 +162,11 @@ export const ProductFormPage = () => {
   const updateProduct = useUpdateProduct();
 
   // ---- حالة الفورم ----
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
     categoryId: "",
-
-    discountPercent: "",
+    discountPercent: "0",
     images: [{ url: "", alt: "", isPrimary: true }],
     variants: [{ sku: "", price: "", stock: "", color: "", size: "" }],
     featured: false,
@@ -153,17 +179,33 @@ export const ProductFormPage = () => {
   useEffect(() => {
     if (productData && isEditing) {
       const product = productData;
+
+      // ✅ تحويل بيانات الـ API إلى صيغة الفورم (الأرقام → نصوص)
+      const formattedImages: FormImage[] = product.images?.length
+        ? product.images.map((img: any) => ({
+            url: img.url ?? "",
+            alt: img.alt ?? "",
+            isPrimary: img.isPrimary ?? false,
+          }))
+        : [{ url: "", alt: "", isPrimary: true }];
+
+      const formattedVariants: FormVariant[] = product.variants?.length
+        ? product.variants.map((v: any) => ({
+            sku: v.sku ?? "",
+            price: v.price != null ? String(v.price) : "",
+            stock: v.stock != null ? String(v.stock) : "",
+            color: v.color ?? "",
+            size: v.size ?? "",
+          }))
+        : [{ sku: "", price: "", stock: "", color: "", size: "" }];
+
       setFormData({
         title: product.title || "",
         description: product.description || "",
         categoryId: product.categoryId || "",
         discountPercent: product.discountPercent?.toString() || "0",
-        images: product.images?.length
-          ? product.images
-          : [{ url: "", alt: "", isPrimary: true }],
-        variants: product.variants?.length
-          ? product.variants
-          : [{ sku: "", price: "", stock: "", color: "", size: "" }],
+        images: formattedImages,
+        variants: formattedVariants,
         featured: product.featured || false,
       });
     }
@@ -179,7 +221,7 @@ export const ProductFormPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ---- عند إضافة تصنيف جديد من المودال ----
+  // ---- عند إضافة تصنيف جديد ----
   const handleCategoryAdded = (newCategoryId: string) => {
     setFormData((prev) => ({ ...prev, categoryId: newCategoryId }));
   };
@@ -206,6 +248,7 @@ export const ProductFormPage = () => {
     }
 
     try {
+      // ✅ التحويل من FormData (نصوص) إلى payload (أرقام/null)
       const payload = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -216,7 +259,7 @@ export const ProductFormPage = () => {
           .filter((img) => img.url.trim() !== "")
           .map((img) => ({
             url: img.url.trim(),
-            alt: img.alt?.trim() || null,
+            alt: img.alt.trim() || null, // ✅ string | null
             order: 0,
             isPrimary: img.isPrimary ?? false,
           })),
@@ -224,13 +267,12 @@ export const ProductFormPage = () => {
           .filter((v) => v.price && parseFloat(v.price) > 0)
           .map((v) => ({
             sku: v.sku.trim() || `SKU-${Date.now()}`,
-            price: parseFloat(v.price) || 0,
-            stock: parseInt(v.stock) || 0,
-            color: v.color?.trim() || null,
-            size: v.size?.trim() || null,
+            price: parseFloat(v.price) || 0, // ✅ number
+            stock: parseInt(v.stock) || 0, // ✅ number
+            color: v.color?.trim() || null, // ✅ string | null
+            size: v.size?.trim() || null, // ✅ string | null
           })),
       };
-      console.log("payload........::::", payload);
 
       if (payload.images.length === 0) {
         toast.error("الرجاء إضافة صورة واحدة على الأقل");
@@ -306,9 +348,9 @@ export const ProductFormPage = () => {
   // ---- استخراج قائمة التصنيفات ----
   const categories: Category[] = Array.isArray(categoriesData)
     ? categoriesData
-    : Array.isArray(categoriesData?.data)
-    ? categoriesData.data
     : [];
+  // : Array.isArray(categoriesData?.data)
+  // ? categoriesData.data
 
   // ---- حالات التحميل ----
   if (productLoading || categoriesLoading) {
@@ -436,7 +478,10 @@ export const ProductFormPage = () => {
                   value={img.url}
                   onChange={(e) => {
                     const newImages = [...formData.images];
-                    newImages[index].url = e.target.value;
+                    newImages[index] = {
+                      ...newImages[index],
+                      url: e.target.value,
+                    };
                     setFormData((prev) => ({ ...prev, images: newImages }));
                   }}
                   placeholder="رابط الصورة"
@@ -448,7 +493,10 @@ export const ProductFormPage = () => {
                   value={img.alt}
                   onChange={(e) => {
                     const newImages = [...formData.images];
-                    newImages[index].alt = e.target.value;
+                    newImages[index] = {
+                      ...newImages[index],
+                      alt: e.target.value,
+                    };
                     setFormData((prev) => ({ ...prev, images: newImages }));
                   }}
                   placeholder="نص بديل (اختياري)"
@@ -473,15 +521,15 @@ export const ProductFormPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold  text-gray-700 dark:text-gray-300 mb-5">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-5">
               المتغيرات *
             </label>
             {formData.variants.map((v, index) => (
               <div
                 key={index}
-                className="grid grid-cols md:grid-cols-3 gap-2 mb-2 space-x-25 "
+                className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2"
               >
-                <div className="flex-col  text-center gap-1">
+                <div className="flex-col text-center gap-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     SKU
                   </label>
@@ -490,7 +538,10 @@ export const ProductFormPage = () => {
                     value={v.sku}
                     onChange={(e) => {
                       const newVariants = [...formData.variants];
-                      newVariants[index].sku = e.target.value;
+                      newVariants[index] = {
+                        ...newVariants[index],
+                        sku: e.target.value,
+                      };
                       setFormData((prev) => ({
                         ...prev,
                         variants: newVariants,
@@ -500,7 +551,7 @@ export const ProductFormPage = () => {
                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                 </div>
-                <div className="flex-col  text-center gap-1">
+                <div className="flex-col text-center gap-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     السعر
                   </label>
@@ -509,7 +560,10 @@ export const ProductFormPage = () => {
                     value={v.price}
                     onChange={(e) => {
                       const newVariants = [...formData.variants];
-                      newVariants[index].price = e.target.value;
+                      newVariants[index] = {
+                        ...newVariants[index],
+                        price: e.target.value,
+                      };
                       setFormData((prev) => ({
                         ...prev,
                         variants: newVariants,
@@ -520,7 +574,7 @@ export const ProductFormPage = () => {
                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                 </div>
-                <div className="flex-col  text-center gap-1">
+                <div className="flex-col text-center gap-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     المخزون
                   </label>
@@ -529,7 +583,10 @@ export const ProductFormPage = () => {
                     value={v.stock}
                     onChange={(e) => {
                       const newVariants = [...formData.variants];
-                      newVariants[index].stock = e.target.value;
+                      newVariants[index] = {
+                        ...newVariants[index],
+                        stock: e.target.value,
+                      };
                       setFormData((prev) => ({
                         ...prev,
                         variants: newVariants,
@@ -539,7 +596,7 @@ export const ProductFormPage = () => {
                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                 </div>
-                <div className="flex-col  text-center gap-1">
+                <div className="flex-col text-center gap-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     اللون
                   </label>
@@ -548,7 +605,10 @@ export const ProductFormPage = () => {
                     value={v.color}
                     onChange={(e) => {
                       const newVariants = [...formData.variants];
-                      newVariants[index].color = e.target.value;
+                      newVariants[index] = {
+                        ...newVariants[index],
+                        color: e.target.value,
+                      };
                       setFormData((prev) => ({
                         ...prev,
                         variants: newVariants,
@@ -558,7 +618,7 @@ export const ProductFormPage = () => {
                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                 </div>
-                <div className="flex-col  text-center  gap-1">
+                <div className="flex-col text-center gap-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     المقاس
                   </label>
@@ -567,7 +627,10 @@ export const ProductFormPage = () => {
                     value={v.size}
                     onChange={(e) => {
                       const newVariants = [...formData.variants];
-                      newVariants[index].size = e.target.value;
+                      newVariants[index] = {
+                        ...newVariants[index],
+                        size: e.target.value,
+                      };
                       setFormData((prev) => ({
                         ...prev,
                         variants: newVariants,
@@ -580,7 +643,7 @@ export const ProductFormPage = () => {
                 <button
                   type="button"
                   onClick={() => removeVariant(index)}
-                  className="px-3 py-2 text-red-600 hover:text-red-700  c font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                  className="px-3 py-2 text-red-600 hover:text-red-700 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                 >
                   حذف المتغير
                 </button>

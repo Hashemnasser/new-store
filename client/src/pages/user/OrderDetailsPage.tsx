@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { PageContainer } from "../../components/layout/PageContainer";
 import { useCart } from "../../features/cart/hooks/useCart";
 import { useOrder } from "../../features/orders/hooks/useOrders";
-import { Order } from "../../features/orders/types/order.types";
 import { formatCurrency } from "../../utils/currency";
 import { formatDate } from "../../utils/date";
 import { cn } from "../../utils/helpers";
@@ -39,16 +38,16 @@ export const OrderDetailsPage = () => {
   const { data, isLoading, error } = useOrder(id!);
   const { addToCart } = useCart();
   const [isReordering, setIsReordering] = useState(false);
-  const order: Order = data ?? {};
-  // دالة إعادة الطلب
+
+  // دالة إعادة الطلب - نستخدم data بدلاً من order
   const handleReorder = useCallback(async () => {
-    if (!order) return;
+    if (!data) return;
     setIsReordering(true);
 
     let addedCount = 0;
     const failedItems: string[] = [];
 
-    for (const item of order.items) {
+    for (const item of data.items) {
       try {
         await addToCart({
           productId: item.variant.product.id,
@@ -75,7 +74,8 @@ export const OrderDetailsPage = () => {
         )}`
       );
     }
-  }, [order, addToCart]);
+  }, [data, addToCart]);
+
   // حالات التحميل والخطأ
   if (isLoading) {
     return (
@@ -87,7 +87,7 @@ export const OrderDetailsPage = () => {
     );
   }
 
-  if (error || !order) {
+  if (error || !data) {
     return (
       <PageContainer>
         <div className="text-center py-12">
@@ -105,6 +105,8 @@ export const OrderDetailsPage = () => {
     );
   }
 
+  // ✅ الآن data مضمون 100% أنه Order
+  const order = data;
   return (
     <PageContainer>
       <motion.div

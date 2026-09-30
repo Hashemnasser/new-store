@@ -16,7 +16,7 @@ export const AdminReviewsPage = () => {
   const deleteReview = useDeleteReviewAsAdmin();
   console.log("data!!!!!!!!!!!!!!::", data);
   // ✅ التأكد من أن reviews مصفوفة (حتى لو كانت فارغة)
-  const reviews: Review[] = Array.isArray(data?.data) ? data.data : [];
+  const reviews: Review[] = Array.isArray(data) ? data : [];
 
   const handleDeleteReview = (reviewId: string) => {
     if (window.confirm("هل أنت متأكد من حذف هذا التقييم؟")) {

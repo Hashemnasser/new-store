@@ -1,4 +1,5 @@
-// src/features/wishlist/api/wishlist.api.ts
+// import { Wishlist } from "./../../../../../server/src/generated/prisma/client";
+// // src/features/wishlist/api/wishlist.api.ts
 
 import http from "../../../services/http";
 import type {
@@ -14,7 +15,9 @@ import type {
 export const wishlistApi = {
   // جلب قائمة الرغبات
   getWishlist: (): Promise<Wishlist> => {
-    return http.get<Wishlist>("/wishlist");
+    return http
+      .get<{ success: boolean; data: Wishlist }>("/wishlist")
+      .then((res) => res.data);
   },
 
   // إضافة منتج إلى قائمة الرغبات

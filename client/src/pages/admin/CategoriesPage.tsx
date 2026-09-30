@@ -138,7 +138,7 @@ const CategoryModal = ({
 export const CategoriesPage = () => {
   const { data, isLoading, error } = useCategories();
   const deleteCategory = useDeleteCategory();
-  const categories: Category[] = Array.isArray(data?.data) ? data?.data : [];
+  const categories: Category[] = Array.isArray(data) ? data : [];
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);

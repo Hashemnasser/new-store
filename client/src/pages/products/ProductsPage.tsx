@@ -33,7 +33,7 @@ export const ProductsPage = () => {
   const { data: categ } = useCategories();
 
   const categoryData: Category[] = useMemo(() => {
-    return Array.isArray(categ?.data) ? categ?.data : [];
+    return Array.isArray(categ) ? categ : [];
   }, [categ]);
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
