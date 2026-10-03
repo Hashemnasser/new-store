@@ -12,6 +12,7 @@ export async function getCart(userId: string) {
     where: { userId },
     include: {
       items: {
+        orderBy: { createdAt: "asc" },
         include: {
           product: {
             select: {
@@ -166,6 +167,7 @@ export async function updateCartItem(
   const updated = await prisma.cartItem.update({
     where: { id: itemId },
     data: { quantity },
+
     include: {
       product: true,
       variant: true,

@@ -139,7 +139,7 @@ export const CartItem = ({
     >
       <Link
         to={`/product/${item.product.slug}`}
-        className="flex-shrink-0 w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden"
+        className="shrink-0 w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden"
       >
         <img
           src={primaryImage || "/images/placeholder.png"}

@@ -159,13 +159,17 @@ export const paymentService = {
       }
 
       case "REFUNDED": {
-        await prisma.order.update({
-          where: { id: event.orderId },
-          data: { status: OrderStatus.CANCELLED },
+        const order = await prisma.order.findFirst({
+          where: { stripePaymentIntentId: event.paymentId },
         });
+        if (order) {
+          await prisma.order.update({
+            where: { id: order.id },
+            data: { status: OrderStatus.CANCELLED },
+          });
+        }
         break;
       }
-
       default:
         console.log(`ℹ️ Unhandled webhook status: ${event.status}`);
     }
@@ -178,5 +182,18 @@ export const paymentService = {
    */
   getAvailableGateways(): string[] {
     return paymentProviderFactory.getEnabledNames();
+  },
+  async createPaymentIntent(params: {
+    amount: number;
+    currency: string;
+    orderId: string;
+    userId: string;
+  }) {
+    return this.createPayment({
+      gateway: "stripe",
+      amount: params.amount,
+      currency: params.currency,
+      orderId: params.orderId,
+    });
   },
 };

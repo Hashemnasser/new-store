@@ -1,4 +1,5 @@
 import { Router } from "express";
+import paymentRoutes from "../payments/payment.routes";
 import adminRoutes from "./admin.routes";
 import authRoutes from "./auth.routes";
 import cartRoutes from "./cart.routes";
@@ -23,7 +24,7 @@ router.use("/admin", adminRoutes);
 router.use("/auth", authRoutes);
 router.use("/admin/coupons", couponRoutes);
 router.use("/coupons", couponRoutes);
-
+router.use("/payments", paymentRoutes); // ✅ جديد
 export default router;
 
 // // ✅ عند إضافة مسارات جديدة
