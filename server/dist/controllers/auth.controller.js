@@ -91,7 +91,7 @@ exports.resetPassword = exports.forgotPassword = exports.changePasswordHandler =
 //   }
 // );
 // src/controllers/auth.controller.ts
-const app_error_1 = require("../errors/app-error.js");
+const request_helpers_1 = require("../utils/request-helpers.js");
 const auth_service_1 = require("../services/auth.service");
 const asyncHandler_1 = require("../utils/asyncHandler");
 // ============================================================
@@ -111,9 +111,7 @@ exports.signUp = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
 // ============================================================
 exports.signIn = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     const { email, password } = req.body;
-    console.log("🔍 Backend - signIn called with email:", email);
     const { user, token } = await (0, auth_service_1.loginUser)(email, password);
-    console.log("🔍 Backend - Token generated:", token);
     res.status(200).json({
         success: true,
         message: "Logged in successfully",
@@ -124,10 +122,7 @@ exports.signIn = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
 // 👤 الحصول على الملف الشخصي (Get Profile)
 // ============================================================
 exports.getProfileHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    if (!req.user || !req.user.id) {
-        throw (0, app_error_1.createError)("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = (0, request_helpers_1.getUserId)(req);
     const user = await (0, auth_service_1.getProfile)(userId);
     res.status(200).json({
         success: true,
@@ -138,10 +133,7 @@ exports.getProfileHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) =>
 // ✏️ تحديث الملف الشخصي (Update Profile)
 // ============================================================
 exports.updateProfileHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    if (!req.user || !req.user.id) {
-        throw (0, app_error_1.createError)("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = (0, request_helpers_1.getUserId)(req);
     const { name, image } = req.body;
     const user = await (0, auth_service_1.updateProfile)(userId, { name, image });
     res.status(200).json({
@@ -154,10 +146,7 @@ exports.updateProfileHandler = (0, asyncHandler_1.asyncHandler)(async (req, res)
 // 🔑 تغيير كلمة المرور (Change Password)
 // ============================================================
 exports.changePasswordHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    if (!req.user || !req.user.id) {
-        throw (0, app_error_1.createError)("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = (0, request_helpers_1.getUserId)(req);
     const { currentPassword, newPassword } = req.body;
     const result = await (0, auth_service_1.changePassword)(userId, currentPassword, newPassword);
     res.status(200).json({

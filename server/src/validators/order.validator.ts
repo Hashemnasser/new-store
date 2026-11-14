@@ -1,5 +1,6 @@
 // src/validators/order.validator.ts
 
+import { OrderStatus } from "@/generated/prisma/enums";
 import { z } from "zod";
 
 export const createOrderSchema = z.object({
@@ -14,14 +15,7 @@ export const createOrderSchema = z.object({
 });
 
 export const updateOrderStatusSchema = z.object({
-  status: z.enum([
-    "PENDING",
-    "PROCESSING",
-    "SHIPPED",
-    "DELIVERED",
-    "CANCELLED",
-  ]),
+  status: z.enum(OrderStatus),
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
-export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;

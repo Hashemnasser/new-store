@@ -31,44 +31,46 @@ export const CheckoutForm = ({ orderId }: CheckoutFormProps) => {
 
     setIsLoading(true);
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}${ROUTES.CHECKOUT_SUCCESS}`,
-      },
-      redirect: "if_required",
-    });
-
-    if (error) {
-      // ❌ فشل الدفع
-      toast.error(error.message || "فشل الدفع");
-      navigate(ROUTES.CHECKOUT_FAILED, {
-        state: { error: error.message, orderId },
-      });
-    } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      // ✅ نجاح الدفع
-      toast.success("تم الدفع بنجاح!");
-
-      // ✅ 1. فرّغ السلة في Zustand Store (فوراً في الواجهة)
-      clearItems();
-
-      // ✅ 2. حدّث React Query Cache
-      queryClient.setQueryData(["cart"], {
-        id: "",
-        userId: "",
-        items: [],
-        total: 0,
-        itemCount: 0,
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}${ROUTES.CHECKOUT_SUCCESS}`,
+        },
+        redirect: "if_required",
       });
 
-      // ✅ 3. انتقل إلى صفحة النجاح
-      navigate(ROUTES.CHECKOUT_SUCCESS, { state: { orderId } });
-    } else {
-      // حالة غير متوقعة (مثل processing)
-      navigate(ROUTES.CHECKOUT_SUCCESS, { state: { orderId } });
+      if (error) {
+        toast.error(error.message || "payment failed");
+        navigate(ROUTES.CHECKOUT_FAILED, {
+          state: { error: error?.message || "payment failed", orderId },
+        });
+        return;
+      } else {
+        if (paymentIntent?.status === "succeeded") {
+          // ✅ نجاح الدفع
+          toast.success("تم الدفع بنجاح!");
+
+          // ✅ 1. فرّغ السلة في Zustand Store (فوراً في الواجهة)
+          clearItems();
+
+          // ✅ 2. حدّث React Query Cache
+          queryClient.setQueryData(["cart"], {
+            id: "",
+            userId: "",
+            items: [],
+            total: 0,
+            itemCount: 0,
+          });
+        }
+        // ✅ 3. انتقل إلى صفحة النجاح
+        navigate(ROUTES.CHECKOUT_SUCCESS, { state: { orderId } });
+      }
+    } catch (error) {
+      toast.error("An unexpected error accured");
+    } finally {
+      setIsLoading(false); // ← دايماً بيتنفذ، حتى لو navigate اشتغلت
     }
-
-    setIsLoading(false);
   };
 
   return (

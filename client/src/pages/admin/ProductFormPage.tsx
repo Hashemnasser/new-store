@@ -1,9 +1,718 @@
+// // src/pages/admin/ProductFormPage.tsx
+
+// import { motion } from "framer-motion";
+// import { ArrowLeft, Save, X } from "lucide-react";
+// import { useEffect, useState } from "react";
+// import { createPortal } from "react-dom";
+// import { useNavigate, useParams } from "react-router-dom";
+// import { toast } from "sonner";
+// import { ROUTES } from "../../app/router/route.constants";
+// import { PageContainer } from "../../components/layout/PageContainer";
+// import {
+//   useCategories,
+//   useCreateCategory,
+// } from "../../features/categories/hooks/useCategories";
+// import {
+//   useCreateProduct,
+//   useProduct,
+//   useUpdateProduct,
+// } from "../../features/products/hooks/useProducts";
+// import type { Category } from "../../types/common.types";
+
+// // ============================================================
+// // ✅ أنواع خاصة بالفورم (كل القيم نصوص لأن حقول الإدخال تُرجع string)
+// // ============================================================
+// interface FormImage {
+//   url: string;
+//   alt: string;
+//   isPrimary: boolean;
+// }
+
+// interface FormVariant {
+//   sku: string;
+//   price: string;
+//   stock: string;
+//   color: string;
+//   size: string;
+// }
+
+// interface FormData {
+//   title: string;
+//   description: string;
+//   categoryId: string;
+//   discountPercent: string;
+//   images: FormImage[];
+//   variants: FormVariant[];
+//   featured: boolean;
+// }
+
+// // ============================================================
+// // 🧩 مكون المودال (يُعرض عبر Portal)
+// // ============================================================
+
+// interface AddCategoryModalProps {
+//   isOpen: boolean;
+//   onClose: () => void;
+//   onCategoryAdded: (categoryId: string) => void;
+// }
+
+// const AddCategoryModal = ({
+//   isOpen,
+//   onClose,
+//   onCategoryAdded,
+// }: AddCategoryModalProps) => {
+//   const [name, setName] = useState("");
+//   const createCategory = useCreateCategory();
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     const trimmedName = name.trim();
+//     if (!trimmedName) {
+//       toast.error("الرجاء إدخال اسم التصنيف");
+//       return;
+//     }
+//     try {
+//       const result = await createCategory.mutateAsync({ name: trimmedName });
+//       onCategoryAdded(result.id);
+//       setName("");
+//       onClose();
+//     } catch (error: any) {
+//       toast.error(
+//         error?.response?.data?.message || error?.message || "فشلت إضافة التصنيف"
+//       );
+//     }
+//   };
+
+//   if (!isOpen) return null;
+
+//   return createPortal(
+//     <div
+//       className="fixed inset-0 z-50 flex items-center justify-center p-4"
+//       onClick={onClose}
+//     >
+//       <div
+//         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+//         onClick={onClose}
+//       />
+//       <div
+//         className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 z-10"
+//         onClick={(e) => e.stopPropagation()}
+//       >
+//         <div className="flex items-center justify-between mb-4">
+//           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+//             إضافة تصنيف جديد
+//           </h3>
+//           <button
+//             type="button"
+//             onClick={onClose}
+//             className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+//           >
+//             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+//           </button>
+//         </div>
+
+//         <form onSubmit={handleSubmit}>
+//           <input
+//             type="text"
+//             value={name}
+//             onChange={(e) => setName(e.target.value)}
+//             placeholder="اسم التصنيف..."
+//             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500  transition"
+//             autoFocus
+//           />
+//           <div className="flex justify-end gap-2 mt-4">
+//             <button
+//               type="button"
+//               onClick={onClose}
+//               className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+//             >
+//               إلغاء
+//             </button>
+//             <button
+//               type="submit"
+//               disabled={createCategory.isPending}
+//               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
+//             >
+//               {createCategory.isPending ? "جاري..." : "إضافة"}
+//             </button>
+//           </div>
+//         </form>
+//       </div>
+//     </div>,
+//     document.body
+//   );
+// };
+
+// // ============================================================
+// // 🧩 المكون الرئيسي (ProductFormPage)
+// // ============================================================
+
+// export const ProductFormPage = () => {
+//   const { slug } = useParams<{ slug: string | undefined }>();
+//   const navigate = useNavigate();
+//   const isEditing = !!slug;
+
+//   // ---- جلب البيانات ----
+//   const { data: productData, isLoading: productLoading } = useProduct(
+//     slug || ""
+//   );
+//   const { data: categoriesData, isLoading: categoriesLoading } =
+//     useCategories();
+//   const createProduct = useCreateProduct();
+//   const updateProduct = useUpdateProduct();
+
+//   // ---- حالة الفورم ----
+//   const [formData, setFormData] = useState<FormData>({
+//     title: "",
+//     description: "",
+//     categoryId: "",
+//     discountPercent: "0",
+//     images: [{ url: "", alt: "", isPrimary: true }],
+//     variants: [{ sku: "", price: "", stock: "", color: "", size: "" }],
+//     featured: false,
+//   });
+
+//   // ---- حالة المودال ----
+//   const [showAddCategory, setShowAddCategory] = useState(false);
+
+//   // ---- ملء البيانات عند التعديل ----
+//   useEffect(() => {
+//     if (productData && isEditing) {
+//       const product = productData;
+
+//       // ✅ تحويل بيانات الـ API إلى صيغة الفورم (الأرقام → نصوص)
+//       const formattedImages: FormImage[] = product.images?.length
+//         ? product.images.map((img: any) => ({
+//             url: img.url ?? "",
+//             alt: img.alt ?? "",
+//             isPrimary: img.isPrimary ?? false,
+//           }))
+//         : [{ url: "", alt: "", isPrimary: true }];
+
+//       const formattedVariants: FormVariant[] = product.variants?.length
+//         ? product.variants.map((v: any) => ({
+//             sku: v.sku ?? "",
+//             price: v.price != null ? String(v.price) : "",
+//             stock: v.stock != null ? String(v.stock) : "",
+//             color: v.color ?? "",
+//             size: v.size ?? "",
+//           }))
+//         : [{ sku: "", price: "", stock: "", color: "", size: "" }];
+
+//       setFormData({
+//         title: product.title || "",
+//         description: product.description || "",
+//         categoryId: product.categoryId || "",
+//         discountPercent: product.discountPercent?.toString() || "0",
+//         images: formattedImages,
+//         variants: formattedVariants,
+//         featured: product.featured || false,
+//       });
+//     }
+//   }, [productData, isEditing]);
+
+//   // ---- معالجة تغييرات الحقول ----
+//   const handleChange = (
+//     e: React.ChangeEvent<
+//       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+//     >
+//   ) => {
+//     const { name, value } = e.target;
+//     setFormData((prev) => ({ ...prev, [name]: value }));
+//   };
+
+//   // ---- عند إضافة تصنيف جديد ----
+//   const handleCategoryAdded = (newCategoryId: string) => {
+//     setFormData((prev) => ({ ...prev, categoryId: newCategoryId }));
+//   };
+
+//   // ---- إرسال الفورم ----
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+
+//     if (!formData.title.trim()) {
+//       toast.error("الرجاء إدخال عنوان المنتج");
+//       return;
+//     }
+//     if (!formData.categoryId) {
+//       toast.error("الرجاء اختيار التصنيف");
+//       return;
+//     }
+//     if (formData.images.some((img) => !img.url.trim())) {
+//       toast.error("الرجاء إدخال رابط صورة صحيح");
+//       return;
+//     }
+//     if (formData.variants.some((v) => !v.price || parseFloat(v.price) <= 0)) {
+//       toast.error("الرجاء إدخال سعر صحيح للمتغير");
+//       return;
+//     }
+
+//     try {
+//       // ✅ التحويل من FormData (نصوص) إلى payload (أرقام/null)
+//       const payload = {
+//         title: formData.title.trim(),
+//         description: formData.description.trim(),
+//         categoryId: formData.categoryId,
+//         featured: formData.featured,
+//         discountPercent: parseFloat(formData.discountPercent) || 0,
+//         images: formData.images
+//           .filter((img) => img.url.trim() !== "")
+//           .map((img) => ({
+//             url: img.url.trim(),
+//             alt: img.alt.trim() || null, // ✅ string | null
+//             order: 0,
+//             isPrimary: img.isPrimary ?? false,
+//           })),
+//         variants: formData.variants
+//           .filter((v) => v.price && parseFloat(v.price) > 0)
+//           .map((v) => ({
+//             sku: v.sku.trim() || `SKU-${Date.now()}`,
+//             price: parseFloat(v.price) || 0, // ✅ number
+//             stock: parseInt(v.stock) || 0, // ✅ number
+//             color: v.color?.trim() || null, // ✅ string | null
+//             size: v.size?.trim() || null, // ✅ string | null
+//           })),
+//       };
+
+//       if (payload.images.length === 0) {
+//         toast.error("الرجاء إضافة صورة واحدة على الأقل");
+//         return;
+//       }
+//       if (payload.variants.length === 0) {
+//         toast.error("الرجاء إضافة متغير واحد على الأقل");
+//         return;
+//       }
+
+//       if (isEditing) {
+//         if (!slug) throw new Error("Slug is required for update");
+//         await updateProduct.mutateAsync({ slug, data: payload });
+//         toast.success("تم تحديث المنتج بنجاح");
+//       } else {
+//         await createProduct.mutateAsync(payload);
+//         toast.success("تم إضافة المنتج بنجاح");
+//       }
+//       navigate(ROUTES.ADMIN_PRODUCTS);
+//     } catch (error: any) {
+//       const message =
+//         error?.response?.data?.message ||
+//         error?.message ||
+//         (isEditing
+//           ? "حدث خطأ أثناء تحديث المنتج"
+//           : "حدث خطأ أثناء إضافة المنتج");
+//       toast.error(message);
+//       console.error("❌ Submit error:", error);
+//     }
+//   };
+
+//   // ---- دوال إدارة الصور ----
+//   const addImage = () => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       images: [...prev.images, { url: "", alt: "", isPrimary: false }],
+//     }));
+//   };
+
+//   const removeImage = (index: number) => {
+//     if (formData.images.length <= 1) {
+//       toast.error("يجب أن يكون هناك صورة واحدة على الأقل");
+//       return;
+//     }
+//     setFormData((prev) => ({
+//       ...prev,
+//       images: prev.images.filter((_, i) => i !== index),
+//     }));
+//   };
+
+//   // ---- دوال إدارة المتغيرات ----
+//   const addVariant = () => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       variants: [
+//         ...prev.variants,
+//         { sku: "", price: "", stock: "", color: "", size: "" },
+//       ],
+//     }));
+//   };
+
+//   const removeVariant = (index: number) => {
+//     if (formData.variants.length <= 1) {
+//       toast.error("يجب أن يكون هناك متغير واحد على الأقل");
+//       return;
+//     }
+//     setFormData((prev) => ({
+//       ...prev,
+//       variants: prev.variants.filter((_, i) => i !== index),
+//     }));
+//   };
+
+//   // ---- استخراج قائمة التصنيفات ----
+//   const categories: Category[] = Array.isArray(categoriesData)
+//     ? categoriesData
+//     : [];
+//   // : Array.isArray(categoriesData?.data)
+//   // ? categoriesData.data
+
+//   // ---- حالات التحميل ----
+//   if (productLoading || categoriesLoading) {
+//     return (
+//       <PageContainer>
+//         <div className="flex items-center justify-center min-h-[60vh]">
+//           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+//         </div>
+//       </PageContainer>
+//     );
+//   }
+
+//   // ---- العرض ----
+//   return (
+//     <PageContainer>
+//       <motion.div
+//         initial={{ opacity: 0, y: 20 }}
+//         animate={{ opacity: 1, y: 0 }}
+//         transition={{ duration: 0.3 }}
+//       >
+//         <div className="flex items-center gap-4 mb-6">
+//           <button
+//             onClick={() => navigate(ROUTES.ADMIN_PRODUCTS)}
+//             className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+//           >
+//             <ArrowLeft className="w-5 h-5" />
+//           </button>
+//           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+//             {isEditing ? "تعديل المنتج" : "إضافة منتج جديد"}
+//           </h1>
+//         </div>
+
+//         <form
+//           onSubmit={handleSubmit}
+//           className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6"
+//         >
+//           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+//                 عنوان المنتج *
+//               </label>
+//               <input
+//                 type="text"
+//                 name="title"
+//                 value={formData.title}
+//                 onChange={handleChange}
+//                 required
+//                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500  transition"
+//                 placeholder="مثال: هاتف ذكي"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium mb-1">
+//                 التصنيف *
+//               </label>
+//               <div className="flex gap-2">
+//                 <select
+//                   name="categoryId"
+//                   value={formData.categoryId}
+//                   onChange={handleChange}
+//                   required
+//                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+//                 >
+//                   <option value="">اختر تصنيف</option>
+//                   {categories.map((category) => (
+//                     <option key={category.id} value={category.id}>
+//                       {category.name}
+//                     </option>
+//                   ))}
+//                 </select>
+//                 <button
+//                   type="button"
+//                   onClick={() => setShowAddCategory(true)}
+//                   className="px-2 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition whitespace-nowrap"
+//                 >
+//                   Add Category
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+//               الوصف *
+//             </label>
+//             <textarea
+//               name="description"
+//               value={formData.description}
+//               onChange={handleChange}
+//               required
+//               rows={4}
+//               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+//               placeholder="وصف المنتج..."
+//             />
+//           </div>
+
+//           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+//                 نسبة التخفيض (%)
+//               </label>
+//               <input
+//                 type="number"
+//                 name="discountPercent"
+//                 value={formData.discountPercent}
+//                 onChange={handleChange}
+//                 min="0"
+//                 max="100"
+//                 step="0.01"
+//                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+//                 placeholder="0"
+//               />
+//             </div>
+//           </div>
+
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+//               الصور *
+//             </label>
+//             {formData.images.map((img, index) => (
+//               <div key={index} className="flex items-center gap-3 mb-2">
+//                 <input
+//                   type="url"
+//                   value={img.url}
+//                   onChange={(e) => {
+//                     const newImages = [...formData.images];
+//                     newImages[index] = {
+//                       ...newImages[index],
+//                       url: e.target.value,
+//                     };
+//                     setFormData((prev) => ({ ...prev, images: newImages }));
+//                   }}
+//                   placeholder="رابط الصورة"
+//                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500  transition"
+//                   required
+//                 />
+//                 <input
+//                   type="text"
+//                   value={img.alt}
+//                   onChange={(e) => {
+//                     const newImages = [...formData.images];
+//                     newImages[index] = {
+//                       ...newImages[index],
+//                       alt: e.target.value,
+//                     };
+//                     setFormData((prev) => ({ ...prev, images: newImages }));
+//                   }}
+//                   placeholder="نص بديل (اختياري)"
+//                   className="w-32 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500  transition"
+//                 />
+//                 <button
+//                   type="button"
+//                   onClick={() => removeImage(index)}
+//                   className="px-3 py-2 text-red-600 hover:text-red-700 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+//                 >
+//                   حذف
+//                 </button>
+//               </div>
+//             ))}
+//             <button
+//               type="button"
+//               onClick={addImage}
+//               className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+//             >
+//               + إضافة صورة أخرى
+//             </button>
+//           </div>
+
+//           <div>
+//             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-5">
+//               المتغيرات *
+//             </label>
+//             {formData.variants.map((v, index) => (
+//               <div
+//                 key={index}
+//                 className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2"
+//               >
+//                 <div className="flex-col text-center gap-1">
+//                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+//                     SKU
+//                   </label>
+//                   <input
+//                     type="text"
+//                     value={v.sku}
+//                     onChange={(e) => {
+//                       const newVariants = [...formData.variants];
+//                       newVariants[index] = {
+//                         ...newVariants[index],
+//                         sku: e.target.value,
+//                       };
+//                       setFormData((prev) => ({
+//                         ...prev,
+//                         variants: newVariants,
+//                       }));
+//                     }}
+//                     placeholder="SKU"
+//                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500  transition"
+//                   />
+//                 </div>
+//                 <div className="flex-col text-center gap-1">
+//                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+//                     السعر
+//                   </label>
+//                   <input
+//                     type="number"
+//                     value={v.price}
+//                     onChange={(e) => {
+//                       const newVariants = [...formData.variants];
+//                       newVariants[index] = {
+//                         ...newVariants[index],
+//                         price: e.target.value,
+//                       };
+//                       setFormData((prev) => ({
+//                         ...prev,
+//                         variants: newVariants,
+//                       }));
+//                     }}
+//                     placeholder="السعر"
+//                     step="0.01"
+//                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500  transition"
+//                   />
+//                 </div>
+//                 <div className="flex-col text-center gap-1">
+//                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+//                     المخزون
+//                   </label>
+//                   <input
+//                     type="number"
+//                     value={v.stock}
+//                     onChange={(e) => {
+//                       const newVariants = [...formData.variants];
+//                       newVariants[index] = {
+//                         ...newVariants[index],
+//                         stock: e.target.value,
+//                       };
+//                       setFormData((prev) => ({
+//                         ...prev,
+//                         variants: newVariants,
+//                       }));
+//                     }}
+//                     placeholder="المخزون"
+//                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500  transition"
+//                   />
+//                 </div>
+//                 <div className="flex-col text-center gap-1">
+//                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+//                     اللون
+//                   </label>
+//                   <input
+//                     type="text"
+//                     value={v.color}
+//                     onChange={(e) => {
+//                       const newVariants = [...formData.variants];
+//                       newVariants[index] = {
+//                         ...newVariants[index],
+//                         color: e.target.value,
+//                       };
+//                       setFormData((prev) => ({
+//                         ...prev,
+//                         variants: newVariants,
+//                       }));
+//                     }}
+//                     placeholder="اللون (اختياري)"
+//                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500  transition"
+//                   />
+//                 </div>
+//                 <div className="flex-col text-center gap-1">
+//                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+//                     المقاس
+//                   </label>
+//                   <input
+//                     type="text"
+//                     value={v.size}
+//                     onChange={(e) => {
+//                       const newVariants = [...formData.variants];
+//                       newVariants[index] = {
+//                         ...newVariants[index],
+//                         size: e.target.value,
+//                       };
+//                       setFormData((prev) => ({
+//                         ...prev,
+//                         variants: newVariants,
+//                       }));
+//                     }}
+//                     placeholder="المقاس (اختياري)"
+//                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500  transition"
+//                   />
+//                 </div>
+//                 <button
+//                   type="button"
+//                   onClick={() => removeVariant(index)}
+//                   className="px-3 py-2 text-red-600 hover:text-red-700 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+//                 >
+//                   حذف المتغير
+//                 </button>
+//               </div>
+//             ))}
+//             <button
+//               type="button"
+//               onClick={addVariant}
+//               className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+//             >
+//               + إضافة متغير آخر
+//             </button>
+//           </div>
+
+//           <div className="flex items-center gap-2">
+//             <input
+//               name="featured"
+//               type="checkbox"
+//               checked={formData.featured}
+//               onChange={(e) =>
+//                 setFormData((prev) => ({ ...prev, featured: e.target.checked }))
+//               }
+//               className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+//             />
+//             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+//               مميز (Featured)
+//             </label>
+//           </div>
+
+//           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+//             <button
+//               type="button"
+//               onClick={() => navigate(ROUTES.ADMIN_PRODUCTS)}
+//               className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+//             >
+//               إلغاء
+//             </button>
+//             <button
+//               type="submit"
+//               disabled={createProduct.isPending || updateProduct.isPending}
+//               className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
+//             >
+//               <Save className="w-4 h-4" />
+//               {createProduct.isPending || updateProduct.isPending
+//                 ? "جاري الحفظ..."
+//                 : isEditing
+//                 ? "تحديث المنتج"
+//                 : "إضافة المنتج"}
+//             </button>
+//           </div>
+//         </form>
+//       </motion.div>
+
+//       <AddCategoryModal
+//         isOpen={showAddCategory}
+//         onClose={() => setShowAddCategory(false)}
+//         onCategoryAdded={handleCategoryAdded}
+//       />
+//     </PageContainer>
+//   );
+// };
+
 // src/pages/admin/ProductFormPage.tsx
 
 import { motion } from "framer-motion";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useFieldArray, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ROUTES } from "../../app/router/route.constants";
@@ -20,36 +729,27 @@ import {
 import type { Category } from "../../types/common.types";
 
 // ============================================================
-// ✅ أنواع خاصة بالفورم (كل القيم نصوص لأن حقول الإدخال تُرجع string)
+// ✅ أنواع خاصة بالفورم
 // ============================================================
-interface FormImage {
-  url: string;
-  alt: string;
-  isPrimary: boolean;
-}
-
-interface FormVariant {
-  sku: string;
-  price: string;
-  stock: string;
-  color: string;
-  size: string;
-}
-
 interface FormData {
   title: string;
   description: string;
   categoryId: string;
   discountPercent: string;
-  images: FormImage[];
-  variants: FormVariant[];
   featured: boolean;
+  images: { url: string; alt: string; isPrimary: boolean }[];
+  variants: {
+    sku: string;
+    price: string;
+    stock: string;
+    color: string;
+    size: string;
+  }[];
 }
 
 // ============================================================
-// 🧩 مكون المودال (يُعرض عبر Portal)
+// 🧩 مكون المودال (كما هو بدون تغيير)
 // ============================================================
-
 interface AddCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -110,14 +810,13 @@ const AddCategoryModal = ({
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
-
         <form onSubmit={handleSubmit}>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="اسم التصنيف..."
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
             autoFocus
           />
           <div className="flex justify-end gap-2 mt-4">
@@ -146,7 +845,6 @@ const AddCategoryModal = ({
 // ============================================================
 // 🧩 المكون الرئيسي (ProductFormPage)
 // ============================================================
-
 export const ProductFormPage = () => {
   const { slug } = useParams<{ slug: string | undefined }>();
   const navigate = useNavigate();
@@ -161,27 +859,48 @@ export const ProductFormPage = () => {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
 
-  // ---- حالة الفورم ----
-  const [formData, setFormData] = useState<FormData>({
-    title: "",
-    description: "",
-    categoryId: "",
-    discountPercent: "0",
-    images: [{ url: "", alt: "", isPrimary: true }],
-    variants: [{ sku: "", price: "", stock: "", color: "", size: "" }],
-    featured: false,
-  });
-
   // ---- حالة المودال ----
   const [showAddCategory, setShowAddCategory] = useState(false);
+
+  // ---- إعداد react-hook-form ----
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
+    defaultValues: {
+      title: "",
+      description: "",
+      categoryId: "",
+      discountPercent: "0",
+      featured: false,
+      images: [{ url: "", alt: "", isPrimary: true }],
+      variants: [{ sku: "", price: "", stock: "", color: "", size: "" }],
+    },
+  });
+
+  // ---- إدارة المصفوفات باستخدام useFieldArray ----
+  const {
+    fields: imageFields,
+    append: appendImage,
+    remove: removeImage,
+  } = useFieldArray({ control, name: "images" });
+
+  const {
+    fields: variantFields,
+    append: appendVariant,
+    remove: removeVariant,
+  } = useFieldArray({ control, name: "variants" });
 
   // ---- ملء البيانات عند التعديل ----
   useEffect(() => {
     if (productData && isEditing) {
       const product = productData;
 
-      // ✅ تحويل بيانات الـ API إلى صيغة الفورم (الأرقام → نصوص)
-      const formattedImages: FormImage[] = product.images?.length
+      const formattedImages = product.images?.length
         ? product.images.map((img: any) => ({
             url: img.url ?? "",
             alt: img.alt ?? "",
@@ -189,7 +908,7 @@ export const ProductFormPage = () => {
           }))
         : [{ url: "", alt: "", isPrimary: true }];
 
-      const formattedVariants: FormVariant[] = product.variants?.length
+      const formattedVariants = product.variants?.length
         ? product.variants.map((v: any) => ({
             sku: v.sku ?? "",
             price: v.price != null ? String(v.price) : "",
@@ -199,78 +918,51 @@ export const ProductFormPage = () => {
           }))
         : [{ sku: "", price: "", stock: "", color: "", size: "" }];
 
-      setFormData({
+      // ✅ استخدام reset لتحديث كل الفورم دفعة واحدة
+      reset({
         title: product.title || "",
         description: product.description || "",
         categoryId: product.categoryId || "",
         discountPercent: product.discountPercent?.toString() || "0",
+        featured: product.featured || false,
         images: formattedImages,
         variants: formattedVariants,
-        featured: product.featured || false,
       });
     }
-  }, [productData, isEditing]);
+  }, [productData, isEditing, reset]);
 
-  // ---- معالجة تغييرات الحقول ----
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // ---- عند إضافة تصنيف جديد ----
+  // ---- عند إضافة تصنيف جديد من المودال ----
   const handleCategoryAdded = (newCategoryId: string) => {
-    setFormData((prev) => ({ ...prev, categoryId: newCategoryId }));
+    // ✅ تحديث قيمة حقل واحد فقط باستخدام setValue
+    setValue("categoryId", newCategoryId, { shouldValidate: true });
   };
 
   // ---- إرسال الفورم ----
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.title.trim()) {
-      toast.error("الرجاء إدخال عنوان المنتج");
-      return;
-    }
-    if (!formData.categoryId) {
-      toast.error("الرجاء اختيار التصنيف");
-      return;
-    }
-    if (formData.images.some((img) => !img.url.trim())) {
-      toast.error("الرجاء إدخال رابط صورة صحيح");
-      return;
-    }
-    if (formData.variants.some((v) => !v.price || parseFloat(v.price) <= 0)) {
-      toast.error("الرجاء إدخال سعر صحيح للمتغير");
-      return;
-    }
-
+  const onSubmit = async (data: FormData) => {
     try {
       // ✅ التحويل من FormData (نصوص) إلى payload (أرقام/null)
       const payload = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        categoryId: formData.categoryId,
-        featured: formData.featured,
-        discountPercent: parseFloat(formData.discountPercent) || 0,
-        images: formData.images
+        title: data.title.trim(),
+        description: data.description.trim(),
+        categoryId: data.categoryId,
+        featured: data.featured,
+        discountPercent: parseFloat(data.discountPercent) || 0,
+        images: data.images
           .filter((img) => img.url.trim() !== "")
           .map((img) => ({
             url: img.url.trim(),
-            alt: img.alt.trim() || null, // ✅ string | null
+            alt: img.alt.trim() || null,
             order: 0,
             isPrimary: img.isPrimary ?? false,
           })),
-        variants: formData.variants
+        variants: data.variants
           .filter((v) => v.price && parseFloat(v.price) > 0)
           .map((v) => ({
             sku: v.sku.trim() || `SKU-${Date.now()}`,
-            price: parseFloat(v.price) || 0, // ✅ number
-            stock: parseInt(v.stock) || 0, // ✅ number
-            color: v.color?.trim() || null, // ✅ string | null
-            size: v.size?.trim() || null, // ✅ string | null
+            price: parseFloat(v.price) || 0,
+            stock: parseInt(v.stock) || 0,
+            color: v.color?.trim() || null,
+            size: v.size?.trim() || null,
           })),
       };
 
@@ -304,53 +996,15 @@ export const ProductFormPage = () => {
     }
   };
 
-  // ---- دوال إدارة الصور ----
-  const addImage = () => {
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, { url: "", alt: "", isPrimary: false }],
-    }));
-  };
-
-  const removeImage = (index: number) => {
-    if (formData.images.length <= 1) {
-      toast.error("يجب أن يكون هناك صورة واحدة على الأقل");
-      return;
-    }
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-  };
-
-  // ---- دوال إدارة المتغيرات ----
-  const addVariant = () => {
-    setFormData((prev) => ({
-      ...prev,
-      variants: [
-        ...prev.variants,
-        { sku: "", price: "", stock: "", color: "", size: "" },
-      ],
-    }));
-  };
-
-  const removeVariant = (index: number) => {
-    if (formData.variants.length <= 1) {
-      toast.error("يجب أن يكون هناك متغير واحد على الأقل");
-      return;
-    }
-    setFormData((prev) => ({
-      ...prev,
-      variants: prev.variants.filter((_, i) => i !== index),
-    }));
-  };
+  // ---- دوال إدارة الصور والمتغيرات (باستخدام الـ append و remove) ----
+  const addImage = () => appendImage({ url: "", alt: "", isPrimary: false });
+  const addVariant = () =>
+    appendVariant({ sku: "", price: "", stock: "", color: "", size: "" });
 
   // ---- استخراج قائمة التصنيفات ----
   const categories: Category[] = Array.isArray(categoriesData)
     ? categoriesData
     : [];
-  // : Array.isArray(categoriesData?.data)
-  // ? categoriesData.data
 
   // ---- حالات التحميل ----
   if (productLoading || categoriesLoading) {
@@ -384,7 +1038,7 @@ export const ProductFormPage = () => {
         </div>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
           className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -394,13 +1048,17 @@ export const ProductFormPage = () => {
               </label>
               <input
                 type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                {...register("title", {
+                  required: "الرجاء إدخال عنوان المنتج",
+                })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
                 placeholder="مثال: هاتف ذكي"
               />
+              {errors.title && (
+                <span className="text-red-500 text-xs mt-1 block">
+                  {errors.title.message}
+                </span>
+              )}
             </div>
 
             <div>
@@ -409,11 +1067,10 @@ export const ProductFormPage = () => {
               </label>
               <div className="flex gap-2">
                 <select
-                  name="categoryId"
-                  value={formData.categoryId}
-                  onChange={handleChange}
-                  required
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  {...register("categoryId", {
+                    required: "الرجاء اختيار التصنيف",
+                  })}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
                 >
                   <option value="">اختر تصنيف</option>
                   {categories.map((category) => (
@@ -430,6 +1087,11 @@ export const ProductFormPage = () => {
                   Add Category
                 </button>
               </div>
+              {errors.categoryId && (
+                <span className="text-red-500 text-xs mt-1 block">
+                  {errors.categoryId.message}
+                </span>
+              )}
             </div>
           </div>
 
@@ -438,14 +1100,16 @@ export const ProductFormPage = () => {
               الوصف *
             </label>
             <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
+              {...register("description", { required: "الرجاء إدخال الوصف" })}
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
               placeholder="وصف المنتج..."
             />
+            {errors.description && (
+              <span className="text-red-500 text-xs mt-1 block">
+                {errors.description.message}
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -455,56 +1119,46 @@ export const ProductFormPage = () => {
               </label>
               <input
                 type="number"
-                name="discountPercent"
-                value={formData.discountPercent}
-                onChange={handleChange}
+                {...register("discountPercent")}
                 min="0"
                 max="100"
                 step="0.01"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
                 placeholder="0"
               />
             </div>
           </div>
 
+          {/* -------------------- قسم الصور -------------------- */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               الصور *
             </label>
-            {formData.images.map((img, index) => (
-              <div key={index} className="flex items-center gap-3 mb-2">
+            {imageFields.map((field, index) => (
+              <div key={field.id} className="flex items-center gap-3 mb-2">
                 <input
                   type="url"
-                  value={img.url}
-                  onChange={(e) => {
-                    const newImages = [...formData.images];
-                    newImages[index] = {
-                      ...newImages[index],
-                      url: e.target.value,
-                    };
-                    setFormData((prev) => ({ ...prev, images: newImages }));
-                  }}
+                  {...register(`images.${index}.url` as const, {
+                    required: "رابط الصورة مطلوب",
+                  })}
                   placeholder="رابط الصورة"
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  required
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
                 />
                 <input
                   type="text"
-                  value={img.alt}
-                  onChange={(e) => {
-                    const newImages = [...formData.images];
-                    newImages[index] = {
-                      ...newImages[index],
-                      alt: e.target.value,
-                    };
-                    setFormData((prev) => ({ ...prev, images: newImages }));
-                  }}
+                  {...register(`images.${index}.alt` as const)}
                   placeholder="نص بديل (اختياري)"
-                  className="w-32 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  className="w-32 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
                 />
                 <button
                   type="button"
-                  onClick={() => removeImage(index)}
+                  onClick={() => {
+                    if (imageFields.length <= 1) {
+                      toast.error("يجب أن يكون هناك صورة واحدة على الأقل");
+                      return;
+                    }
+                    removeImage(index);
+                  }}
                   className="px-3 py-2 text-red-600 hover:text-red-700 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                 >
                   حذف
@@ -520,132 +1174,84 @@ export const ProductFormPage = () => {
             </button>
           </div>
 
+          {/* -------------------- قسم المتغيرات -------------------- */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-5">
               المتغيرات *
             </label>
-            {formData.variants.map((v, index) => (
+            {variantFields.map((field, index) => (
               <div
-                key={index}
-                className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2"
+                key={field.id}
+                className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-2 items-end"
               >
-                <div className="flex-col text-center gap-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex-col text-center">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     SKU
                   </label>
                   <input
                     type="text"
-                    value={v.sku}
-                    onChange={(e) => {
-                      const newVariants = [...formData.variants];
-                      newVariants[index] = {
-                        ...newVariants[index],
-                        sku: e.target.value,
-                      };
-                      setFormData((prev) => ({
-                        ...prev,
-                        variants: newVariants,
-                      }));
-                    }}
+                    {...register(`variants.${index}.sku` as const)}
                     placeholder="SKU"
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 transition"
                   />
                 </div>
-                <div className="flex-col text-center gap-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex-col text-center">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     السعر
                   </label>
                   <input
                     type="number"
-                    value={v.price}
-                    onChange={(e) => {
-                      const newVariants = [...formData.variants];
-                      newVariants[index] = {
-                        ...newVariants[index],
-                        price: e.target.value,
-                      };
-                      setFormData((prev) => ({
-                        ...prev,
-                        variants: newVariants,
-                      }));
-                    }}
+                    {...register(`variants.${index}.price` as const)}
                     placeholder="السعر"
                     step="0.01"
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 transition"
                   />
                 </div>
-                <div className="flex-col text-center gap-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex-col text-center">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     المخزون
                   </label>
                   <input
                     type="number"
-                    value={v.stock}
-                    onChange={(e) => {
-                      const newVariants = [...formData.variants];
-                      newVariants[index] = {
-                        ...newVariants[index],
-                        stock: e.target.value,
-                      };
-                      setFormData((prev) => ({
-                        ...prev,
-                        variants: newVariants,
-                      }));
-                    }}
+                    {...register(`variants.${index}.stock` as const)}
                     placeholder="المخزون"
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 transition"
                   />
                 </div>
-                <div className="flex-col text-center gap-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex-col text-center">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     اللون
                   </label>
                   <input
                     type="text"
-                    value={v.color}
-                    onChange={(e) => {
-                      const newVariants = [...formData.variants];
-                      newVariants[index] = {
-                        ...newVariants[index],
-                        color: e.target.value,
-                      };
-                      setFormData((prev) => ({
-                        ...prev,
-                        variants: newVariants,
-                      }));
-                    }}
-                    placeholder="اللون (اختياري)"
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    {...register(`variants.${index}.color` as const)}
+                    placeholder="اختياري"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 transition"
                   />
                 </div>
-                <div className="flex-col text-center gap-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex-col text-center">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     المقاس
                   </label>
                   <input
                     type="text"
-                    value={v.size}
-                    onChange={(e) => {
-                      const newVariants = [...formData.variants];
-                      newVariants[index] = {
-                        ...newVariants[index],
-                        size: e.target.value,
-                      };
-                      setFormData((prev) => ({
-                        ...prev,
-                        variants: newVariants,
-                      }));
-                    }}
-                    placeholder="المقاس (اختياري)"
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    {...register(`variants.${index}.size` as const)}
+                    placeholder="اختياري"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 transition"
                   />
                 </div>
                 <button
                   type="button"
-                  onClick={() => removeVariant(index)}
+                  onClick={() => {
+                    if (variantFields.length <= 1) {
+                      toast.error("يجب أن يكون هناك متغير واحد على الأقل");
+                      return;
+                    }
+                    removeVariant(index);
+                  }}
                   className="px-3 py-2 text-red-600 hover:text-red-700 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                 >
-                  حذف المتغير
+                  حذف
                 </button>
               </div>
             ))}
@@ -660,12 +1266,8 @@ export const ProductFormPage = () => {
 
           <div className="flex items-center gap-2">
             <input
-              name="featured"
               type="checkbox"
-              checked={formData.featured}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, featured: e.target.checked }))
-              }
+              {...register("featured")}
               className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
             />
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">

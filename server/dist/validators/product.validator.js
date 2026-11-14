@@ -3,7 +3,7 @@
 // const imageSchema = z.object({
 //   id: z.string().optional(),
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.idParamsSchema = exports.slugParamsSchema = exports.updateProductSchema = exports.createProductSchema = exports.imageSchema = void 0;
+exports.limitSchema = exports.getProductsSchema = exports.idParamsSchema = exports.slugParamsSchema = exports.updateProductSchema = exports.createProductSchema = exports.imageSchema = void 0;
 //   url: z.string().url(),
 //   alt: z.string().optional(),
 //   order: z.number().int().optional(),
@@ -75,21 +75,48 @@ exports.createProductSchema = zod_1.z.object({
 // ============================================================
 // 🔄 UPDATE PRODUCT SCHEMA (All fields optional)
 // ============================================================
-exports.updateProductSchema = zod_1.z.object({
-    title: zod_1.z.string().trim().min(3).max(100).optional(),
-    description: zod_1.z.string().trim().min(10).optional(),
-    categoryId: zod_1.z.string().trim().min(1).optional(),
-    images: zod_1.z.array(exports.imageSchema).optional(),
-    variants: zod_1.z.array(variantSchema).optional(),
-    deletedImageIds: zod_1.z.array(zod_1.z.string()).optional(),
-    deletedVariantIds: zod_1.z.array(zod_1.z.string()).optional(),
-    featured: zod_1.z.boolean().optional().default(false),
-    discountPercent: zod_1.z.number().min(0).max(100).optional(),
-});
+exports.updateProductSchema = exports.createProductSchema
+    .omit({ featured: true, discountPercent: true })
+    .extend({
+    deletedImageIds: zod_1.z.array(zod_1.z.string()),
+    deletedVariantIds: zod_1.z.array(zod_1.z.string()),
+    featured: zod_1.z.boolean(),
+    discountPercent: zod_1.z.number().min(0).max(100),
+})
+    .partial();
 // ✅ مخطط للـ slug
 exports.slugParamsSchema = zod_1.z.object({
     slug: zod_1.z.string().min(1, "Slug is required"),
 });
 exports.idParamsSchema = zod_1.z.object({
     id: zod_1.z.string().min(1, "Id is required"),
+});
+exports.getProductsSchema = zod_1.z.object({
+    // 1. البحث (اختياري تماماً، وإذا موجود ما بيصير فاضي)
+    search: zod_1.z.string().trim().min(1, "Search cannot be empty").optional(),
+    // 2. الفئة (اختياري، وإذا ما بعت، بيصير "ALL")
+    category: zod_1.z.string().trim().min(1).optional(),
+    // 3. الترتيب (اختياري، وإذا ما بعت، بيصير "newest")
+    sort: zod_1.z
+        .enum(["newest", "price-asc", "price-desc", "title-asc", "title-desc"])
+        .default("newest"),
+    // 4. الحد الأقصى (بنستخدم coerce عشان نحول النص لرقم، وإذا ما بعت بيصير 12)
+    limit: zod_1.z.coerce
+        .number()
+        .int("Limit must be an integer")
+        .positive("Limit must be positive")
+        .default(12),
+    // 5. رقم الصفحة (نفس الفكرة، وإذا ما بعت بيصير 1)
+    page: zod_1.z.coerce
+        .number()
+        .int("Page must be an integer")
+        .positive("Page must be positive")
+        .default(1),
+    // 6. هل عليه خصم؟ (بنستخدم stringbool عشان نحول النص لـ Boolean بأمان)
+    isOnSale: zod_1.z
+        .stringbool() // أو z.enum(["true", "false"]).transform(v => v === "true")
+        .optional(),
+});
+exports.limitSchema = zod_1.z.object({
+    limit: zod_1.z.coerce.number().int().positive().default(8),
 });

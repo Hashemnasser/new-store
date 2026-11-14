@@ -21,13 +21,7 @@ exports.getCouponByIdHandler = (0, asyncHandler_1.asyncHandler)(async (req, res)
 });
 exports.createCouponHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     const data = req.body;
-    // تحويل التواريخ من string إلى Date
-    const couponData = {
-        ...data,
-        startsAt: new Date(data.startsAt),
-        expiresAt: new Date(data.expiresAt),
-    };
-    const coupon = await (0, coupon_service_1.createCoupon)(couponData);
+    const coupon = await (0, coupon_service_1.createCoupon)(data);
     res.status(201).json({ success: true, data: coupon });
 });
 exports.updateCouponHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
@@ -67,7 +61,7 @@ exports.validateCouponHandler = (0, asyncHandler_1.asyncHandler)(async (req, res
         success: true,
         data: {
             code: coupon.code,
-            discountAmount: discountAmount,
+            discountAmount,
             discountType: coupon.discountType,
             discountValue: coupon.discountValue,
             message: `تم تطبيق الخصم بنجاح!`,

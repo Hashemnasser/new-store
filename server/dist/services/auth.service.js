@@ -96,20 +96,28 @@ async function getProfile(userId) {
  * تحديث الملف الشخصي
  */
 async function updateProfile(userId, data) {
-    const user = await prisma_1.prisma.user.update({
-        where: { id: userId },
-        data,
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            image: true,
-            createdAt: true,
-            updatedAt: true,
-        },
-    });
-    return user;
+    try {
+        return await prisma_1.prisma.user.update({
+            where: { id: userId },
+            data,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                image: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+    }
+    catch (error) {
+        // P2025 معناها السجل مش موجود
+        if (error.code === "P2025") {
+            throw (0, app_error_1.createError)("NOT_FOUND", "User not found");
+        }
+        throw error; // أي خطأ تاني
+    }
 }
 /**
  * تغيير كلمة المرور
@@ -175,7 +183,7 @@ async function requestPasswordReset(email) {
       <p>إذا لم تطلب هذا، يرجى تجاهل هذا البريد الإلكتروني.</p>
     `,
     });
-    return { message: "Reset link sent to your email." };
+    return { message: "If your email exists, you will receive a reset link." };
 }
 // ✅ دالة إعادة تعيين كلمة المرور (باستخدام التوكن)
 async function resetUserPassword(token, newPassword) {

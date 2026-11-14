@@ -45,10 +45,9 @@ export const getProducts = async (params: GetProductsParams) => {
     isOnSale,
     includeOutOfStock = false,
   } = params;
-
   const where: Prisma.ProductWhereInput = {};
 
-  if (includeOutOfStock) {
+  if (!includeOutOfStock) {
     // ✅ استبعاد المنتجات التي ليس لها أي متغير بمخزون > 0
     where.variants = {
       some: {
@@ -110,7 +109,6 @@ export const getProducts = async (params: GetProductsParams) => {
     }),
     prisma.product.count({ where }),
   ]);
-
   // ✅ حساب السعر الأصلي والمخفض لكل منتج
   const productsWithPrices = products.map((product) => {
     // 1. السعر الأصلي: نأخذ basePrice إن وجد، وإلا أول متغير

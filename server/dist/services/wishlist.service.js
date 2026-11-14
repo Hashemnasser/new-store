@@ -125,27 +125,15 @@ async function addToWishlist(userId, data) {
     return wishlistItem;
 }
 async function removeFromWishlist(userId, productId) {
-    // 1. البحث عن قائمة الرغبات
-    const wishlist = await prisma_1.prisma.wishlist.findUnique({
-        where: { userId },
-    });
-    if (!wishlist) {
-        throw (0, app_error_1.createError)("NOT_FOUND", "Wishlist not found");
-    }
-    // 2. البحث عن العنصر
-    const wishlistItem = await prisma_1.prisma.wishlistItem.findFirst({
+    // count: 0. إذا ما لقت شي، هي بس بترجع"Error"ما بترمي "deleteMany"لسنا بحاجة للتحقق من وجود العنصر لان
+    const result = await prisma_1.prisma.wishlistItem.deleteMany({
         where: {
-            wishlistId: wishlist.id,
+            userId,
             productId,
         },
     });
-    if (!wishlistItem) {
+    if (!result.count)
         throw (0, app_error_1.createError)("NOT_FOUND", "Item not found in wishlist");
-    }
-    // 3. حذف العنصر
-    await prisma_1.prisma.wishlistItem.delete({
-        where: { id: wishlistItem.id },
-    });
     return { message: "Item removed from wishlist" };
 }
 async function clearWishlist(userId) {
@@ -163,17 +151,29 @@ async function clearWishlist(userId) {
     return { message: "Wishlist cleared" };
 }
 async function isInWishlist(userId, productId) {
-    const wishlist = await prisma_1.prisma.wishlist.findUnique({
-        where: { userId },
-        include: {
-            items: {
-                where: { productId },
-                take: 1,
-            },
+    const item = await prisma_1.prisma.wishlistItem.findFirst({
+        where: {
+            userId, // ← استخدمنا الحقل مباشرة (بدون JOIN)
+            productId, // ← استخدمنا الحقل مباشرة
         },
     });
-    if (!wishlist) {
-        return false;
-    }
-    return wishlist.items.length > 0;
+    return item !== null;
 }
+// export async function isInWishlist(
+//   userId: string,
+//   productId: string
+// ): Promise<boolean> {
+//   const wishlist = await prisma.wishlist.findUnique({
+//     where: { userId },
+//     include: {
+//       items: {
+//         where: { productId },
+//         take: 1,
+//       },
+//     },
+//   });
+//   if (!wishlist) {
+//     return false;
+//   }
+//   return wishlist.items.length > 0;
+// }

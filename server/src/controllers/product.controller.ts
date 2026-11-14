@@ -13,32 +13,19 @@ import {
 } from "@/services/product.service";
 
 import { asyncHandler } from "@/utils/asyncHandler";
-import { isValidSort } from "@/utils/validation";
 import {
-  createProductSchema,
+  CreateProductInput,
+  GetProductsInput,
+  UpdateProductInput,
   idParamsSchema,
+  limitSchema,
   slugParamsSchema,
-  updateProductSchema,
 } from "@/validators/product.validator";
-
-// export const getAllProducts = asyncHandler(
-//   async (req: Request, res: Response) => {
-//     const params = req.query;
-//     console.log("paaaaaaaaaaaaarrrrrrrrrrrraaaaaaaaaaaaaa", params);
-//     const products = await getProducts();
-
-//     res.json({
-//       success: true,
-//       data: products,
-//     });
-//   }
-// );
 
 export const getOneProduct = asyncHandler(
   async (req: Request, res: Response) => {
     const { slug } = slugParamsSchema.parse(req.params);
     const product = await getProductBySlug(slug);
-    console.log("product  server", product);
 
     res.json({
       success: true,
@@ -49,7 +36,7 @@ export const getOneProduct = asyncHandler(
 
 export const createOneProduct = asyncHandler(
   async (req: Request, res: Response) => {
-    const data = createProductSchema.parse(req.body);
+    const data: CreateProductInput = req.body;
 
     const product = await createProduct(data);
 
@@ -64,7 +51,7 @@ export const createOneProduct = asyncHandler(
 // ✅ تحديث بواسطة slug
 export const updateOneProduct = asyncHandler(async (req, res) => {
   const { slug } = slugParamsSchema.parse(req.params);
-  const data = updateProductSchema.parse(req.body);
+  const data: UpdateProductInput = req.body;
 
   const product = await updateProduct(slug, data);
 
@@ -94,54 +81,42 @@ export const deleteOneProduct = asyncHandler(async (req, res) => {
 
 export const getAllProducts = asyncHandler(
   async (req: Request, res: Response) => {
-    // 1. استخراج المعاملات من req.query
-    const {
+    // 1. البيانات جاية مفحوصة ومحولة من الـ validateQuery middleware
+    //ملاحظة كان فيي جيب السكيما تبع زود واختبر فوراهون بدل ما ادخل بالميدلوير
+    //   وانشاء دالة اختبار وتوسيع الريكويست validateQuery(getProductsSchema)
+    //لانني لم استخدم دالة تحقق الكويري الا هنا لذلك لست يحاجة لميدوير مثل دالة التحقق  فاليديت تبع البودي التي تستخدم في اماكن كثيرة
+    const { search, category, sort, page, limit, isOnSale } =
+      req.validatedQuery as GetProductsInput;
+
+    // 2. استدعاء خدمة المنتجات (بدون أي تحويلات يدوية)
+    const result = await getProducts({
       search,
       category,
       sort,
-      page = "1",
-      limit = "12",
+      page,
+      limit,
       isOnSale,
-    } = req.query;
-
-    // 2. تحويل القيم إلى الأنواع المناسبة
-    const pageNumber = parseInt(page as string, 10) || 1;
-    const limitNumber = parseInt(limit as string, 10) || 12;
-
-    // 3. التحقق من صحة قيمة الترتيب (اختياري)
-    const sortOption = isValidSort(sort as string)
-      ? (sort as string)
-      : "newest";
-    const isOnSaleFilter = isOnSale === "true" ? true : undefined;
-    // 4. استدعاء خدمة المنتجات مع المعاملات
-    const result = await getProducts({
-      search: search as string,
-      category: category as string,
-      sort: sortOption,
-      page: pageNumber,
-      limit: limitNumber,
-      isOnSale: isOnSaleFilter,
     });
 
-    // 5. إرجاع النتيجة
+    // 3. إرجاع النتيجة مع بيانات الـ Pagination
     res.json({
       success: true,
       data: result.products,
       pagination: {
-        page: pageNumber,
-        limit: limitNumber,
+        page,
+        limit,
         total: result.total,
-        totalPages: Math.ceil(result.total / limitNumber),
+        totalPages: Math.ceil(result.total / limit),
       },
     });
   }
 );
-
 // ... الدوال الموجودة ...
 
 export const getFeaturedProductsHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 8;
+    const { limit } = limitSchema.parse(req.query);
+    // const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 8;
     const products = await getFeaturedProducts(limit);
     res.json({ success: true, data: products });
   }
@@ -149,13 +124,9 @@ export const getFeaturedProductsHandler = asyncHandler(
 
 export const getTopSellingProductsHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("getTopSellingProductsHandler....");
-
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 8;
-    console.log("getTopSellingProductsHandler....", limit);
+    const { limit } = limitSchema.parse(req.query);
 
     const products = await getTopSellingProducts(limit);
-    console.log("getTopSellingProductsHandler....", products);
     res.json({ success: true, data: products });
   }
 );

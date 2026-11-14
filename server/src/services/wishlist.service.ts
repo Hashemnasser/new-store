@@ -133,31 +133,16 @@ export async function addToWishlist(userId: string, data: AddToWishlistInput) {
 }
 
 export async function removeFromWishlist(userId: string, productId: string) {
-  // 1. البحث عن قائمة الرغبات
-  const wishlist = await prisma.wishlist.findUnique({
-    where: { userId },
-  });
-
-  if (!wishlist) {
-    throw createError("NOT_FOUND", "Wishlist not found");
-  }
-
-  // 2. البحث عن العنصر
-  const wishlistItem = await prisma.wishlistItem.findFirst({
+  // count: 0. إذا ما لقت شي، هي بس بترجع"Error"ما بترمي "deleteMany"لسنا بحاجة للتحقق من وجود العنصر لان
+  const result = await prisma.wishlistItem.deleteMany({
     where: {
-      wishlistId: wishlist.id,
+      userId,
       productId,
     },
   });
 
-  if (!wishlistItem) {
+  if (!result.count)
     throw createError("NOT_FOUND", "Item not found in wishlist");
-  }
-
-  // 3. حذف العنصر
-  await prisma.wishlistItem.delete({
-    where: { id: wishlistItem.id },
-  });
 
   return { message: "Item removed from wishlist" };
 }
@@ -184,19 +169,33 @@ export async function isInWishlist(
   userId: string,
   productId: string
 ): Promise<boolean> {
-  const wishlist = await prisma.wishlist.findUnique({
-    where: { userId },
-    include: {
-      items: {
-        where: { productId },
-        take: 1,
-      },
+  const item = await prisma.wishlistItem.findFirst({
+    where: {
+      userId, // ← استخدمنا الحقل مباشرة (بدون JOIN)
+      productId, // ← استخدمنا الحقل مباشرة
     },
   });
 
-  if (!wishlist) {
-    return false;
-  }
-
-  return wishlist.items.length > 0;
+  return item !== null;
 }
+
+// export async function isInWishlist(
+//   userId: string,
+//   productId: string
+// ): Promise<boolean> {
+//   const wishlist = await prisma.wishlist.findUnique({
+//     where: { userId },
+//     include: {
+//       items: {
+//         where: { productId },
+//         take: 1,
+//       },
+//     },
+//   });
+
+//   if (!wishlist) {
+//     return false;
+//   }
+
+//   return wishlist.items.length > 0;
+// }

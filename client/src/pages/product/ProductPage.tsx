@@ -132,7 +132,8 @@ export const ProductPage = () => {
 
   const primaryImage =
     product.images.find((img: ProductImage) => img.isPrimary)?.url ||
-    product.images[0]?.url;
+    product.images[0]?.url ||
+    "/images/placeholder.png";
 
   const selectedVariant = product.variants.find(
     (v: ProductVariant) => v.id === selectedVariantId

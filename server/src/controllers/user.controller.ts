@@ -13,13 +13,13 @@ import { asyncHandler } from "../utils/asyncHandler";
 import {
   getUserId,
   getValidatedBody,
-  getValidatedParams,
   idParamsSchema,
 } from "../utils/request-helpers";
 import {
+  ChangeUserRoleInput,
+  UpdateUserInput,
   changeUserPasswordSchema,
-  changeUserRoleSchema,
-  updateUserSchema,
+  querySchema,
 } from "../validators/user.validator";
 
 // ============================================================
@@ -41,7 +41,7 @@ export const getCurrentUserHandler = asyncHandler(
 export const updateCurrentUserHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = getUserId(req);
-    const data = getValidatedBody(req, updateUserSchema);
+    const data: UpdateUserInput = req.body;
 
     const user = await updateUser(userId, data);
 
@@ -89,18 +89,17 @@ export const deleteCurrentUserHandler = asyncHandler(
 
 export const getAllUsersHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-
+    // const page = parseInt(req.query.page as string) || 1;
+    // const limit = parseInt(req.query.limit as string) || 10;
+    const { page, limit } = querySchema.parse(req.query);
     const result = await getAllUsers(page, limit);
-    console.log("all users", result);
     res.json({
       success: true,
       data: result.users,
       pagination: {
         total: result.total,
         page: result.page,
-        limit: result.limit,
+        limit,
         totalPages: result.totalPages,
       },
     });
@@ -109,7 +108,7 @@ export const getAllUsersHandler = asyncHandler(
 
 export const getUserByIdHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = getValidatedParams(req, idParamsSchema);
+    const { id } = idParamsSchema.parse(req.params);
 
     const user = await getUserById(id);
 
@@ -122,8 +121,8 @@ export const getUserByIdHandler = asyncHandler(
 
 export const updateUserByIdHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = getValidatedParams(req, idParamsSchema);
-    const data = getValidatedBody(req, updateUserSchema);
+    const { id } = idParamsSchema.parse(req);
+    const data: UpdateUserInput = req.body;
 
     const user = await updateUser(id, data);
 
@@ -137,9 +136,10 @@ export const updateUserByIdHandler = asyncHandler(
 
 export const deleteUserByIdHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = getValidatedParams(req, idParamsSchema);
-    // لا نمرر currentUserId، لأن المدير يمكنه حذف أي مستخدم (مع منع حذف المدير الوحيد)
-    const result = await deleteUser(id);
+    const { id } = idParamsSchema.parse(req.params);
+    const userId = getUserId(req);
+
+    const result = await deleteUser(id, userId);
 
     res.json({
       success: true,
@@ -150,8 +150,8 @@ export const deleteUserByIdHandler = asyncHandler(
 
 export const changeUserRoleHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = getValidatedParams(req, idParamsSchema);
-    const data = getValidatedBody(req, changeUserRoleSchema);
+    const { id } = idParamsSchema.parse(req.params);
+    const data: ChangeUserRoleInput = req.body;
 
     const user = await changeUserRole(id, data);
 

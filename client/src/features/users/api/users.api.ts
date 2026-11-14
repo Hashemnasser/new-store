@@ -30,6 +30,11 @@ export const usersApi = {
   deleteUser: (id: string): Promise<{ message: string }> => {
     return http.delete<{ message: string }>(`/users/admin/${id}`);
   },
+  // ✅ الدالة الجديدة لحذف الحساب الشخصي
+  deleteCurrentUser: async (): Promise<{ message: string }> => {
+    // المسار عادة بيكون /users/me أو /users/profile
+    return await http.delete("/users/me");
+  },
 
   // تحديث بيانات مستخدم (للمدير)
   updateUser: (

@@ -13,6 +13,7 @@ async function getCart(userId) {
         where: { userId },
         include: {
             items: {
+                orderBy: { createdAt: "asc" },
                 include: {
                     product: {
                         select: {

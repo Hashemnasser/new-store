@@ -1,6 +1,6 @@
 // src/controllers/wishlist.controller.ts
 
-import { createError } from "@/errors/app-error";
+import { getUserId } from "@/utils/request-helpers";
 import { Request, Response } from "express";
 import z from "zod";
 import {
@@ -11,7 +11,7 @@ import {
   removeFromWishlist,
 } from "../services/wishlist.service";
 import { asyncHandler } from "../utils/asyncHandler";
-import { addToWishlistSchema } from "../validators/wishlist.validator";
+import { AddToWishlistInput } from "../validators/wishlist.validator";
 
 const idParamsSchema = z.object({
   productId: z.string(),
@@ -19,12 +19,7 @@ const idParamsSchema = z.object({
 
 export const getWishlistHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-
-    const userId = req.user.id;
+    const userId = getUserId(req);
 
     const wishlist = await getWishlist(userId);
 
@@ -37,13 +32,8 @@ export const getWishlistHandler = asyncHandler(
 
 export const addToWishlistHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-
-    const userId = req.user.id;
-    const data = addToWishlistSchema.parse(req.body);
+    const userId = getUserId(req);
+    const data: AddToWishlistInput = req.body;
 
     const item = await addToWishlist(userId, data);
 
@@ -57,12 +47,7 @@ export const addToWishlistHandler = asyncHandler(
 
 export const removeFromWishlistHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-
-    const userId = req.user.id;
+    const userId = getUserId(req);
     const { productId } = idParamsSchema.parse(req.params);
 
     const result = await removeFromWishlist(userId, productId);
@@ -77,11 +62,7 @@ export const removeFromWishlistHandler = asyncHandler(
 export const clearWishlistHandler = asyncHandler(
   async (req: Request, res: Response) => {
     // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-
-    const userId = req.user.id;
+    const userId = getUserId(req);
 
     const result = await clearWishlist(userId);
 
@@ -94,12 +75,8 @@ export const clearWishlistHandler = asyncHandler(
 
 export const isInWishlistHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
+    const userId = getUserId(req);
 
-    const userId = req.user.id;
     const { productId } = idParamsSchema.parse(req.params);
 
     const exists = await isInWishlist(userId, productId);

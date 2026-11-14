@@ -1,5 +1,7 @@
 // src/routes/admin.routes.ts
 
+import { validate } from "@/middleware/validate.middleware";
+import { replenishStockSchema } from "@/validators/admin.validator";
 import { Router } from "express";
 import {
   getDashboardStatsHandler,
@@ -17,5 +19,9 @@ router.use(authMiddleware, adminMiddleware);
 router.get("/dashboard", getDashboardStatsHandler);
 router.get("/analytics/sales", getSalesAnalyticsHandler);
 router.get("/low-stock", getLowStockProductsHandler); // ✅ أضف هذا السطر
-router.patch("/replenish/:variantId", replenishStockHandler); // ✅ أضف هذا السطر
+router.patch(
+  "/replenish/:variantId",
+  validate(replenishStockSchema),
+  replenishStockHandler
+); // ✅ أضف هذا السطر
 export default router;

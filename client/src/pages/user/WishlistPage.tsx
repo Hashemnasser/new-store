@@ -269,7 +269,9 @@ export const WishlistPage = () => {
                   >
                     <img
                       src={
-                        item.product.images[0]?.url || "/images/placeholder.png"
+                        item.product.images.find((img) => img.isPrimary)?.url ||
+                        item.product.images[0]?.url ||
+                        "/images/placeholder.png"
                       }
                       alt={item.product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

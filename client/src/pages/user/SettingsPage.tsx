@@ -12,6 +12,7 @@ import { ROUTES } from "../../app/router/route.constants";
 import { PageContainer } from "../../components/layout/PageContainer";
 import { Button } from "../../components/ui/Button";
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import { useDeleteCurrentUser } from "../../features/users/hooks/useUsers";
 import { useTheme } from "../../providers/ThemeProvider";
 
 // ============================================================
@@ -42,8 +43,7 @@ export const SettingsPage = () => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
+  const { mutate: deleteMyAccount, isPending } = useDeleteCurrentUser();
   // ✅ نموذج تغيير كلمة المرور
   const {
     register,
@@ -93,12 +93,7 @@ export const SettingsPage = () => {
     );
     if (!confirmDelete) return;
 
-    setIsDeleting(true);
-    // هنا يمكنك استدعاء API حذف الحساب (غير موجود حالياً، لكن سنضيفه لاحقاً)
-    // مؤقتاً: نعرض رسالة ونقوم بتسجيل الخروج
-    toast.warning("ميزة حذف الحساب قيد التطوير");
-    setIsDeleting(false);
-    // logout(); // لو أردت تسجيل الخروج فوراً
+    deleteMyAccount();
   };
 
   return (
@@ -289,11 +284,11 @@ export const SettingsPage = () => {
               <Button
                 variant="danger"
                 onClick={handleDeleteAccount}
-                disabled={isDeleting}
+                disabled={isPending}
                 className="flex items-center gap-2"
               >
                 <Trash2 className="w-4 h-4" />
-                {isDeleting ? "جاري الحذف..." : "حذف الحساب"}
+                {isPending ? "جاري الحذف..." : "حذف الحساب"}
               </Button>
             </div>
           </div>

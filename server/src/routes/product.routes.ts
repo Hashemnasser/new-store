@@ -9,16 +9,17 @@ import {
   getTopSellingProductsHandler,
   updateOneProduct,
 } from "@/controllers/product.controller";
-import { validate } from "@/middleware/validate.middleware";
+import { validate, validateQuery } from "@/middleware/validate.middleware";
 import {
   createProductSchema,
+  getProductsSchema,
   updateProductSchema,
 } from "@/validators/product.validator";
 import { Router } from "express";
 
 const router = Router();
 
-router.get("/", getAllProducts);
+router.get("/", validateQuery(getProductsSchema), getAllProducts);
 // ✅ مسارات جديدة للمنتجات الديناميكية
 router.get("/featured", getFeaturedProductsHandler);
 router.get("/top-selling", getTopSellingProductsHandler);

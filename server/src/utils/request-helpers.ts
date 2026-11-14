@@ -6,15 +6,15 @@ import { createError } from "../errors/app-error";
 
 // ✅ مخططات موحدة لمعاملات المسار (Params)
 export const idParamsSchema = z.object({
-  id: z.string().min(1, "ID is required"),
+  id: z.cuid2().min(1, "ID is required"),
 });
 
 export const productIdParamsSchema = z.object({
-  productId: z.string().min(1, "Product ID is required"),
+  productId: z.cuid2().min(1, "Product ID is required"),
 });
 
 export const reviewIdParamsSchema = z.object({
-  reviewId: z.string().min(1, "Review ID is required"),
+  reviewId: z.cuid2().min(1, "Review ID is required"),
 });
 
 // ✅ دالة مساعدة للحصول على userId بأمان

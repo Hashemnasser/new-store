@@ -140,12 +140,20 @@ export const paymentService = {
             include: { variant: true },
           });
 
-          for (const item of orderItems) {
-            await tx.productVariant.update({
-              where: { id: item.variantId },
-              data: { stock: { increment: item.quantity } },
-            });
-          }
+          // for (const item of orderItems) {
+          //   await tx.productVariant.update({
+          //     where: { id: item.variantId },
+          //     data: { stock: { increment: item.quantity } },
+          //   });
+          // }
+          await Promise.all(
+            orderItems.map((item) =>
+              tx.productVariant.update({
+                where: { id: item.variantId },
+                data: { stock: { increment: item.quantity } },
+              })
+            )
+          );
 
           await tx.order.update({
             where: { id: event.orderId },

@@ -9,7 +9,6 @@ exports.getSalesAnalytics = getSalesAnalytics;
 exports.getLowStockProducts = getLowStockProducts;
 exports.replenishStock = replenishStock;
 const app_error_1 = require("../errors/app-error.js");
-const enums_1 = require("../generated/prisma/enums.js");
 const prisma_1 = require("../lib/prisma");
 // ============================================================
 // دالة جلب إحصائيات لوحة التحكم الرئيسية (مُحسّنة)
@@ -46,9 +45,9 @@ async function getDashboardStats() {
             take: 5,
         })
             .then(async (items) => {
-            const productIds = items.map((item) => item.variantId);
+            const variantIds = items.map((item) => item.variantId);
             const variants = await prisma_1.prisma.productVariant.findMany({
-                where: { id: { in: productIds } },
+                where: { id: { in: variantIds } },
                 select: {
                     id: true,
                     price: true,
@@ -66,8 +65,9 @@ async function getDashboardStats() {
                     },
                 },
             });
+            const variantsMap = new Map(variants.map((variant) => [variant.id, variant]));
             return items.map((item) => {
-                const variant = variants.find((v) => v.id === item.variantId);
+                const variant = variantsMap.get(item.variantId);
                 return {
                     productId: variant?.product.id || "",
                     title: variant?.product.title || "Unknown",
@@ -120,37 +120,73 @@ async function getDashboardStats() {
 // ============================================================
 /**
  * حساب نمو المستخدمين (إجمالي، عدد المستخدمين الجدد في الشهر الماضي، نسبة النمو)
+ *
+ *
  */
-async function getUserGrowth() {
-    const now = new Date();
-    const lastMonth = new Date(now);
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const [totalUsers, newUsersLastMonth] = await Promise.all([
+// server/src/services/admin.service.ts
+/**
+ * حساب نمو المستخدمين خلال فترة زمنية محددة
+ * @param days - عدد الأيام (افتراضي: 30 يوماً)
+ * @returns إجمالي المستخدمين + الجدد في الفترة + معدل النمو الفعلي
+ */
+async function getUserGrowth(days = 30) {
+    // ✅ فترة ثابتة (30 يوماً) — لا تتأثر بعدد أيام الشهر
+    const periodStart = new Date();
+    periodStart.setDate(periodStart.getDate() - days);
+    const [totalUsers, newUsersInPeriod] = await Promise.all([
         prisma_1.prisma.user.count(),
         prisma_1.prisma.user.count({
-            where: { createdAt: { gte: lastMonth } },
+            where: { createdAt: { gte: periodStart } },
         }),
     ]);
-    const growthRate = totalUsers > 0 ? (newUsersLastMonth / totalUsers) * 100 : 0;
+    // ✅ حساب معدل النمو الفعلي: (الجديد / القديم) × 100
+    const previousUsers = totalUsers - newUsersInPeriod;
+    const growthRate = previousUsers > 0
+        ? (newUsersInPeriod / previousUsers) * 100
+        : newUsersInPeriod > 0
+            ? 100 // نمو من الصفر
+            : 0; // لا جديد ولا قديم
     return {
         totalUsers,
-        newUsersLastMonth,
+        newUsersLastMonth: newUsersInPeriod, // إبقاء الاسم للتوافقية
+        periodDays: days, // ← جديد: ليعرف الفرونت طول الفترة
         growthRate: Number(growthRate.toFixed(1)),
     };
 }
-/**
- * توزيع الطلبات حسب الحالة
- */
 async function getOrdersByStatus() {
-    const statuses = Object.values(enums_1.OrderStatus);
-    const counts = await Promise.all(statuses.map((status) => prisma_1.prisma.order.count({
-        where: { status },
-    })));
-    return statuses.reduce((acc, status, index) => {
-        acc[status.toLowerCase()] = counts[index];
-        return acc;
-    }, {});
+    const results = await prisma_1.prisma.order.groupBy({
+        by: ["status"],
+        _count: { status: true },
+    });
+    // تهيئة كل الحالات بـ 0
+    const counts = {
+        pending: 0,
+        processing: 0,
+        shipped: 0,
+        delivered: 0,
+        cancelled: 0,
+    };
+    // تعبئة الأرقام الحقيقية
+    for (const result of results) {
+        const key = result.status.toLowerCase();
+        counts[key] = result._count.status;
+    }
+    return counts;
 }
+// export async function getOrdersByStatus() {
+//   const statuses = Object.values(OrderStatus);
+//   const counts = await Promise.all(
+//     statuses.map((status) =>
+//       prisma.order.count({
+//         where: { status },
+//       })
+//     )
+//   );
+//   return statuses.reduce((acc, status, index) => {
+//     acc[status.toLowerCase() as keyof typeof acc] = counts[index];
+//     return acc;
+//   }, {} as Record<string, number>);
+// }
 /**
  * أفضل الفئات مبيعاً (Top Categories) - اختياري
  */
@@ -180,29 +216,28 @@ async function getSalesAnalytics(days = 30) {
             createdAt: { gte: startDate },
             status: { not: "CANCELLED" },
         },
-        select: {
-            totalAmount: true,
-            createdAt: true,
-        },
-        orderBy: {
-            createdAt: "asc",
-        },
+        select: { totalAmount: true, createdAt: true },
     });
-    console.log("order..........:::::", orders);
-    // تجميع المبيعات حسب اليوم
-    const salesByDay = orders.reduce((acc, order) => {
+    // 1. تجميع حسب اليوم (Object → O(1) access)
+    const salesByDay = {};
+    for (const order of orders) {
         const date = order.createdAt.toISOString().split("T")[0];
-        acc[date] = (acc[date] || 0) + Number(order.totalAmount);
-        return acc;
-    }, {});
-    // تحويل إلى مصفوفة
-    const salesData = Object.entries(salesByDay).map(([date, total]) => ({
-        date,
-        total,
-    }));
+        salesByDay[date] = (salesByDay[date] || 0) + Number(order.totalAmount);
+    }
+    // 2. بناء كل الأيام، والقيمة من Object أو 0
+    const salesData = [];
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split("T")[0];
+        salesData.push({
+            date: key,
+            total: salesByDay[key] ?? 0, // ← السحر كله هنا
+        });
+    }
     return {
         totalOrders: orders.length,
-        totalRevenue: orders.reduce((sum, order) => sum + Number(order.totalAmount), 0),
+        totalRevenue: orders.reduce((s, o) => s + Number(o.totalAmount), 0),
         salesData,
     };
 }

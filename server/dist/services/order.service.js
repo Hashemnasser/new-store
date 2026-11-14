@@ -17,19 +17,24 @@ const email_templates_1 = require("../utils/email.templates");
 const cart_service_1 = require("./cart.service");
 const coupon_service_1 = require("./coupon.service");
 // ============================================================
-// 🛒 إنشاء طلب جديد (مع دعم بوابات الدفع المتعددة)
+// 🛒 إنشاء طلب جديد
 // ============================================================
 async function createOrder(userId, data) {
+    // ============================================================
     // 1. جلب السلة
+    // ============================================================
     const cart = await (0, cart_service_1.getCart)(userId);
     if (!cart || cart.items.length === 0) {
         throw (0, app_error_1.createError)("BAD_REQUEST", "Cart is empty");
     }
-    // 2. حساب الإجمالي الأصلي (بدون خصم)
+    // ============================================================
+    // 2. التحقق من العناصر وحساب الإجمالي (مرة واحدة فقط)
+    // ============================================================
     let subtotal = new library_1.Decimal(0);
     const orderItemsData = [];
     for (const item of cart.items) {
-        if (!item.variant) {
+        // ✅ تحقق شامل (variant + variantId + stock)
+        if (!item.variant || !item.variantId) {
             throw (0, app_error_1.createError)("BAD_REQUEST", "Variant not found for cart item");
         }
         if (item.variant.stock < item.quantity) {
@@ -38,13 +43,16 @@ async function createOrder(userId, data) {
         const price = new library_1.Decimal(item.variant.price);
         const itemTotal = price.mul(item.quantity);
         subtotal = subtotal.add(itemTotal);
+        // ✅ TypeScript بتعرف الآن إن variantId = string (بدون !)
         orderItemsData.push({
             variantId: item.variantId,
             quantity: item.quantity,
-            price: price,
+            price,
         });
     }
+    // ============================================================
     // 3. معالجة الكوبون (إن وجد)
+    // ============================================================
     let coupon = null;
     let discountAmount = new library_1.Decimal(0);
     let finalAmount = subtotal;
@@ -55,22 +63,28 @@ async function createOrder(userId, data) {
         }
         discountAmount = (0, coupon_service_1.calculateDiscount)(subtotal, coupon);
         finalAmount = subtotal.minus(discountAmount);
+        // ✅ حماية من المبالغ السالبة
         if (finalAmount.isNegative()) {
             finalAmount = new library_1.Decimal(0);
         }
     }
-    // 4. تحديد بوابة الدفع بناءً على طريقة الدفع
+    // ============================================================
+    // 4. تحديد بوابة الدفع
+    // ============================================================
     const isCashPayment = data.paymentMethod === "CASH";
     const gateway = isCashPayment ? null : "stripe";
-    // 5. إنشاء الطلب في قاعدة البيانات (بحالة PENDING دائماً)
+    // ============================================================
+    // 5. إنشاء الطلب + خصم المخزون (في transaction)
+    // ============================================================
     const order = await prisma_1.prisma.$transaction(async (tx) => {
+        // 5.1 إنشاء الطلب
         const newOrder = await tx.order.create({
             data: {
                 userId,
                 totalAmount: finalAmount,
-                subtotal: subtotal,
-                discountAmount: discountAmount,
-                couponId: coupon?.id || null,
+                subtotal,
+                discountAmount,
+                couponId: coupon?.id ?? null,
                 shippingAddress: data.shippingAddress,
                 status: enums_1.OrderStatus.PENDING,
                 items: {
@@ -85,21 +99,19 @@ async function createOrder(userId, data) {
                 },
             },
         });
-        // ✅ خصم المخزون (سيُعاد تلقائياً إذا فشل الدفع عبر الـ Webhook)
-        for (const item of cart.items) {
-            await tx.productVariant.update({
-                where: { id: item.variantId },
-                data: { stock: { decrement: item.quantity } },
-            });
-        }
-        // ✅ تفريغ السلة فقط عند الدفع عند الاستلام
-        // في حالة الدفع الإلكتروني: سيتم التفريغ في الـ Webhook بعد نجاح الدفع
+        // 5.2 خصم المخزون (✅ مع return صحيح)
+        await Promise.all(orderItemsData.map((item) => tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { decrement: item.quantity } },
+        })));
+        // 5.3 تفريغ السلة (للدفع عند الاستلام فقط)
+        // للدفع الإلكتروني: سيتم التفريغ في الـ Webhook بعد نجاح الدفع
         if (isCashPayment) {
             await tx.cartItem.deleteMany({
                 where: { cartId: cart.id },
             });
         }
-        // تحديث عدد استخدامات الكوبون
+        // 5.4 تحديث عداد الكوبون
         if (coupon) {
             await tx.coupon.update({
                 where: { id: coupon.id },
@@ -108,7 +120,9 @@ async function createOrder(userId, data) {
         }
         return newOrder;
     });
-    // 6. إنشاء عملية دفع (إن لزم الأمر)
+    // ============================================================
+    // 6. إنشاء عملية الدفع (للدفع الإلكتروني)
+    // ============================================================
     let paymentResult = null;
     if (!isCashPayment && gateway) {
         try {
@@ -125,14 +139,12 @@ async function createOrder(userId, data) {
             };
         }
         catch (error) {
-            // ✅ في حال فشل إنشاء عملية الدفع، نعيد المخزون ونلغي الطلب
+            // ✅ Rollback: إعادة المخزون وإلغاء الطلب
             await prisma_1.prisma.$transaction(async (tx) => {
-                for (const item of cart.items) {
-                    await tx.productVariant.update({
-                        where: { id: item.variantId },
-                        data: { stock: { increment: item.quantity } },
-                    });
-                }
+                await Promise.all(orderItemsData.map((item) => tx.productVariant.update({
+                    where: { id: item.variantId },
+                    data: { stock: { increment: item.quantity } },
+                })));
                 await tx.order.update({
                     where: { id: order.id },
                     data: { status: enums_1.OrderStatus.CANCELLED },
@@ -141,10 +153,16 @@ async function createOrder(userId, data) {
             throw (0, app_error_1.createError)("PAYMENT_FAILED", "فشل إنشاء عملية الدفع. تم إلغاء الطلب وإعادة المخزون.");
         }
     }
-    // 7. إرسال الإيميلات
+    // ============================================================
+    // 7. إرسال الإيميلات (للدفع عند الاستلام فقط)
+    // ============================================================
     if (isCashPayment) {
-        await sendOrderEmails(order, userId);
+        // ✅ لا ننتظر الإيميل (لا نعطل الاستجابة)
+        sendOrderEmails(order, userId).catch((err) => console.error("❌ Failed to send order emails:", err));
     }
+    // ============================================================
+    // 8. النتيجة النهائية
+    // ============================================================
     return { order, paymentResult };
 }
 // ============================================================

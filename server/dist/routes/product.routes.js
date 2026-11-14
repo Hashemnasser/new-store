@@ -6,7 +6,7 @@ const validate_middleware_1 = require("../middleware/validate.middleware.js");
 const product_validator_1 = require("../validators/product.validator.js");
 const express_1 = require("express");
 const router = (0, express_1.Router)();
-router.get("/", product_controller_1.getAllProducts);
+router.get("/", (0, validate_middleware_1.validateQuery)(product_validator_1.getProductsSchema), product_controller_1.getAllProducts);
 // ✅ مسارات جديدة للمنتجات الديناميكية
 router.get("/featured", product_controller_1.getFeaturedProductsHandler);
 router.get("/top-selling", product_controller_1.getTopSellingProductsHandler);

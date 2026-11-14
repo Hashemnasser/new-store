@@ -1,21 +1,10 @@
 // src/middleware/auth.middleware.ts
 
-import { User } from "@/generated/prisma/client";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
-
-// تمديد نوع Request ليشمل user
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: User;
-    }
-  }
-}
 
 export const authMiddleware = async (
   req: Request,

@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defineExtension = exports.JsonNullValueFilter = exports.NullsOrder = exports.QueryMode = exports.NullableJsonNullValueInput = exports.SortOrder = exports.CouponScalarFieldEnum = exports.WishlistItemScalarFieldEnum = exports.WishlistScalarFieldEnum = exports.ReviewScalarFieldEnum = exports.OrderItemScalarFieldEnum = exports.OrderScalarFieldEnum = exports.ProductVariantScalarFieldEnum = exports.ProductImageScalarFieldEnum = exports.ProductScalarFieldEnum = exports.CategoryScalarFieldEnum = exports.CartItemScalarFieldEnum = exports.CartScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
+exports.defineExtension = exports.JsonNullValueFilter = exports.NullsOrder = exports.QueryMode = exports.NullableJsonNullValueInput = exports.SortOrder = exports.ProcessedWebhookEventScalarFieldEnum = exports.CouponScalarFieldEnum = exports.WishlistItemScalarFieldEnum = exports.WishlistScalarFieldEnum = exports.ReviewScalarFieldEnum = exports.OrderItemScalarFieldEnum = exports.OrderScalarFieldEnum = exports.ProductVariantScalarFieldEnum = exports.ProductImageScalarFieldEnum = exports.ProductScalarFieldEnum = exports.CategoryScalarFieldEnum = exports.CartItemScalarFieldEnum = exports.CartScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/library"));
 /**
  * Prisma Errors
@@ -115,7 +115,8 @@ exports.ModelName = {
     Review: 'Review',
     Wishlist: 'Wishlist',
     WishlistItem: 'WishlistItem',
-    Coupon: 'Coupon'
+    Coupon: 'Coupon',
+    ProcessedWebhookEvent: 'ProcessedWebhookEvent'
 };
 /**
  * Enums
@@ -254,6 +255,11 @@ exports.CouponScalarFieldEnum = {
     isActive: 'isActive',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
+};
+exports.ProcessedWebhookEventScalarFieldEnum = {
+    id: 'id',
+    type: 'type',
+    createdAt: 'createdAt'
 };
 exports.SortOrder = {
     asc: 'asc',

@@ -11,40 +11,49 @@ import type {
 // ============================================================
 // 📋 جلب جميع المستخدمين (مع ترقيم الصفحات)
 // ============================================================
-export async function getAllUsers(page: number = 1, limit: number = 10) {
-  const skip = (page - 1) * limit;
 
-  const [users, total] = await Promise.all([
-    prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        image: true,
-        createdAt: true,
-        updatedAt: true,
-        _count: {
-          select: {
-            orders: true,
-            reviews: true,
-          },
+export async function getAllUsers(page: number, limit: number) {
+  // 1. احسب العدد الإجمالي للمستخدمين
+  const total = await prisma.user.count();
+
+  // 2. لو مافي ولا مستخدم، ارجع استجابة فاضية بشكل آمن
+  if (total === 0) {
+    return { users: [], total: 0, page: 1, totalPages: 0 };
+  }
+
+  // 3. احسب عدد الصفحات
+  const totalPages = Math.ceil(total / limit);
+
+  // 4. Capping: لو طلب صفحة أكبر من المتاح، رجعه لآخر صفحة
+  const safePage = Math.min(page, totalPages);
+  const skip = (safePage - 1) * limit;
+
+  // 5. جلب البيانات مع الـ select المخصص
+  const users = await prisma.user.findMany({
+    skip,
+    take: limit,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      image: true,
+      createdAt: true,
+      updatedAt: true,
+      // ✅ جلب عدد الطلبات وعدد التقييمات لكل مستخدم
+      _count: {
+        select: {
+          orders: true,
+          reviews: true,
         },
       },
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
-    }),
-    prisma.user.count(),
-  ]);
+    },
+    orderBy: {
+      createdAt: "desc", // ← الأحدث أولاً (اختياري، بس مفيد للوحة التحكم)
+    },
+  });
 
-  return {
-    users,
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
-  };
+  return { users, total, page: safePage, totalPages };
 }
 
 // ============================================================
@@ -154,49 +163,64 @@ export async function changeMyPassword(
 // ============================================================
 // 🗑️ حذف مستخدم (مع حماية المدير الوحيد)
 // ============================================================
-export async function deleteUser(userId: string, currentUserId?: string) {
-  // إذا تم تمرير currentUserId، نتحقق من عدم حذف المدير الوحيد لنفسه
-  if (currentUserId && userId === currentUserId) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+export async function deleteUser(targetUserId: string, currentUserId: string) {
+  // ✅ الترانزأكشن من أول خطوة عشان نمنع أي تلاعب متزامن (Race Conditions)
+  return await prisma.$transaction(async (tx) => {
+    // 1. جلب المستخدم المستهدف (الضحية) - استعلام واحد فقط
+    const targetUser = await tx.user.findUnique({
+      where: { id: targetUserId },
     });
-    if (!user) throw createError("NOT_FOUND", "User not found");
 
-    if (user.role === "ADMIN") {
-      const adminCount = await prisma.user.count({
-        where: { role: "ADMIN" },
+    if (!targetUser) {
+      throw createError("NOT_FOUND", "User not found");
+    }
+
+    // 2. الفحص الذكي: هل المستخدم عم يحذف حسابه بنفسه؟
+    const isDeletingSelf = targetUserId === currentUserId;
+
+    if (isDeletingSelf) {
+      // ---- الحالة الأولى: حذف النفس ----
+      // إحنا هون وفرنا استعلام جلب بيانات currentUser، لأننا أصلاً هو!
+
+      // بس بنتأكد: إذا كان أدمن، هل هو المدير الوحيد؟
+      if (targetUser.role === "ADMIN") {
+        const adminCount = await tx.user.count({ where: { role: "ADMIN" } });
+        if (adminCount <= 1) {
+          throw createError("FORBIDDEN", "Cannot delete the only admin user");
+        }
+      }
+    } else {
+      // ---- الحالة الثانية: شخص عم يحذف شخص تاني ----
+      // هون إجبارياً لازم نجيب بيانات اللي عم ينفذ الحذف ونتأكد إنه أدمن
+
+      const currentUser = await tx.user.findUnique({
+        where: { id: currentUserId },
       });
-      if (adminCount === 1) {
-        throw createError("BAD_REQUEST", "Cannot delete the only admin user");
+
+      if (!currentUser || currentUser.role !== "ADMIN") {
+        throw createError(
+          "FORBIDDEN",
+          "You don't have permission to delete this user"
+        );
+      }
+
+      // وإذا كان الشخص المستهدف (الضحية) أدمن، لازم نتأكد إنه مش المدير الوحيد
+      if (targetUser.role === "ADMIN") {
+        const adminCount = await tx.user.count({ where: { role: "ADMIN" } });
+        if (adminCount <= 1) {
+          throw createError("FORBIDDEN", "Cannot delete the only admin user");
+        }
       }
     }
-  }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user) {
-    throw createError("NOT_FOUND", "User not found");
-  }
-
-  // منع حذف المدير الوحيد (إذا لم يتم التحقق من قبل)
-  if (user.role === "ADMIN" && !currentUserId) {
-    const adminCount = await prisma.user.count({
-      where: { role: "ADMIN" },
+    // 3. تنفيذ الحذف (بعد ما تأكدنا من كل الشروط)
+    await tx.user.delete({
+      where: { id: targetUserId },
     });
-    if (adminCount === 1) {
-      throw createError("BAD_REQUEST", "Cannot delete the only admin user");
-    }
-  }
 
-  await prisma.user.delete({
-    where: { id: userId },
+    return { message: "User deleted successfully" };
   });
-
-  return { message: "User deleted successfully" };
 }
-
 // ============================================================
 // 🔐 تغيير دور المستخدم (للمدير فقط)
 // ============================================================

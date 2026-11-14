@@ -5,20 +5,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isInWishlistHandler = exports.clearWishlistHandler = exports.removeFromWishlistHandler = exports.addToWishlistHandler = exports.getWishlistHandler = void 0;
-const app_error_1 = require("../errors/app-error.js");
+const request_helpers_1 = require("../utils/request-helpers.js");
 const zod_1 = __importDefault(require("zod"));
 const wishlist_service_1 = require("../services/wishlist.service");
 const asyncHandler_1 = require("../utils/asyncHandler");
-const wishlist_validator_1 = require("../validators/wishlist.validator");
 const idParamsSchema = zod_1.default.object({
     productId: zod_1.default.string(),
 });
 exports.getWishlistHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-        throw (0, app_error_1.createError)("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = (0, request_helpers_1.getUserId)(req);
     const wishlist = await (0, wishlist_service_1.getWishlist)(userId);
     res.json({
         success: true,
@@ -26,12 +21,8 @@ exports.getWishlistHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) =
     });
 });
 exports.addToWishlistHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-        throw (0, app_error_1.createError)("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
-    const data = wishlist_validator_1.addToWishlistSchema.parse(req.body);
+    const userId = (0, request_helpers_1.getUserId)(req);
+    const data = req.body;
     const item = await (0, wishlist_service_1.addToWishlist)(userId, data);
     res.status(201).json({
         success: true,
@@ -40,11 +31,7 @@ exports.addToWishlistHandler = (0, asyncHandler_1.asyncHandler)(async (req, res)
     });
 });
 exports.removeFromWishlistHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-        throw (0, app_error_1.createError)("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = (0, request_helpers_1.getUserId)(req);
     const { productId } = idParamsSchema.parse(req.params);
     const result = await (0, wishlist_service_1.removeFromWishlist)(userId, productId);
     res.json({
@@ -54,10 +41,7 @@ exports.removeFromWishlistHandler = (0, asyncHandler_1.asyncHandler)(async (req,
 });
 exports.clearWishlistHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-        throw (0, app_error_1.createError)("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = (0, request_helpers_1.getUserId)(req);
     const result = await (0, wishlist_service_1.clearWishlist)(userId);
     res.json({
         success: true,
@@ -65,11 +49,7 @@ exports.clearWishlistHandler = (0, asyncHandler_1.asyncHandler)(async (req, res)
     });
 });
 exports.isInWishlistHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-        throw (0, app_error_1.createError)("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = (0, request_helpers_1.getUserId)(req);
     const { productId } = idParamsSchema.parse(req.params);
     const exists = await (0, wishlist_service_1.isInWishlist)(userId, productId);
     res.json({

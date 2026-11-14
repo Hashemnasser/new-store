@@ -1,3 +1,4 @@
+//vite-env.d
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {

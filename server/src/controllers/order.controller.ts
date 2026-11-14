@@ -1,9 +1,7 @@
 // src/controllers/order.controller.ts (تحديث)
 
-import { createError } from "@/errors/app-error";
+import { getUserId, idParamsSchema } from "@/utils/request-helpers";
 import { Request, Response } from "express";
-import z from "zod";
-import { OrderStatus } from "../generated/prisma/enums"; // ✅ استيراد الـ Enum
 import {
   createOrder,
   deleteOrder,
@@ -13,25 +11,16 @@ import {
   updateOrderStatus,
 } from "../services/order.service";
 import { asyncHandler } from "../utils/asyncHandler";
-import {
-  createOrderSchema,
-  updateOrderStatusSchema,
-} from "../validators/order.validator";
+import { updateOrderStatusSchema } from "../validators/order.validator";
 
 // ============================================================
 // 👤 دوال المستخدم (User)
 // ============================================================
-const idParamsSchema = z.object({
-  id: z.string(),
-});
+
 export const createOrderHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
-    const data = createOrderSchema.parse(req.body);
+    const userId = getUserId(req);
+    const data = req.body; //تم التحقق في ملف الروت بواسطة دالة validate;
 
     const { order, paymentResult } = await createOrder(userId, data);
 
@@ -51,11 +40,7 @@ export const createOrderHandler = asyncHandler(
 
 export const getUserOrdersHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = getUserId(req);
 
     const orders = await getUserOrders(userId);
 
@@ -68,11 +53,7 @@ export const getUserOrdersHandler = asyncHandler(
 
 export const getOrderByIdHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = getUserId(req);
     const { id } = idParamsSchema.parse(req.params);
 
     const order = await getOrderById(id, userId);
@@ -104,9 +85,7 @@ export const updateOrderStatusHandler = asyncHandler(
     const { id } = idParamsSchema.parse(req.params);
     const { status } = updateOrderStatusSchema.parse(req.body);
 
-    // ✅ تحويل النص إلى Enum
-    const enumStatus = status as OrderStatus;
-    const result = await updateOrderStatus(id, enumStatus);
+    const result = await updateOrderStatus(id, status);
 
     res.json({
       success: true,

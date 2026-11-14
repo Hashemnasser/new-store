@@ -31,7 +31,7 @@ router.get("/product/:productId", getProductReviewsHandler);
 router.use(authMiddleware);
 
 router.get("/me", getUserReviewsHandler);
-router.get("/:id", getReviewByIdHandler);
+router.get("/:id", getReviewByIdHandler); //"/:id"يجب وضعه بعد المسار الثابت لانهما يتشابهان بالوظيفة وعدد المقاطع وهو واحد هنا
 router.post("/", validate(createReviewSchema), createReviewHandler);
 router.patch("/:id", validate(updateReviewSchema), updateReviewHandler);
 router.delete("/:id", deleteReviewHandler);
@@ -39,7 +39,8 @@ router.delete("/:id", deleteReviewHandler);
 // ============================================================
 // مسارات المدير (تتطلب مصادقة + صلاحيات مدير)
 // ============================================================
-router.get("/admin/all", adminMiddleware, getAllReviewsHandler);
+//اذا كان المسار الثابت مثل هذا والمسار المتغير يختلفان بعدد المقاطع يمكن ترتيبهما كيفما نريد
+router.get("/admin/all", adminMiddleware, getAllReviewsHandler); //  "/admin/all"رابط بمقطعين
 router.delete("/admin/:id", adminMiddleware, deleteReviewAsAdminHandler);
 
 export default router;

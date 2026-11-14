@@ -12,7 +12,7 @@ const slug_1 = require("../utils/slug.js");
 const getProducts = async (params) => {
     const { search, category, sort, page = 1, limit = 12, isOnSale, includeOutOfStock = false, } = params;
     const where = {};
-    if (includeOutOfStock) {
+    if (!includeOutOfStock) {
         // ✅ استبعاد المنتجات التي ليس لها أي متغير بمخزون > 0
         where.variants = {
             some: {

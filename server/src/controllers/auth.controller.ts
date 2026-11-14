@@ -104,7 +104,7 @@
 // );
 // src/controllers/auth.controller.ts
 
-import { createError } from "@/errors/app-error";
+import { getUserId } from "@/utils/request-helpers";
 import { Request, Response } from "express";
 import {
   changePassword,
@@ -137,10 +137,8 @@ export const signUp = asyncHandler(async (req: Request, res: Response) => {
 // ============================================================
 export const signIn = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  console.log("🔍 Backend - signIn called with email:", email);
 
   const { user, token } = await loginUser(email, password);
-  console.log("🔍 Backend - Token generated:", token);
 
   res.status(200).json({
     success: true,
@@ -154,11 +152,7 @@ export const signIn = asyncHandler(async (req: Request, res: Response) => {
 // ============================================================
 export const getProfileHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-
-    const userId = req.user.id;
+    const userId = getUserId(req);
     const user = await getProfile(userId);
 
     res.status(200).json({
@@ -173,10 +167,7 @@ export const getProfileHandler = asyncHandler(
 // ============================================================
 export const updateProfileHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = getUserId(req);
     const { name, image } = req.body;
 
     const user = await updateProfile(userId, { name, image });
@@ -194,10 +185,7 @@ export const updateProfileHandler = asyncHandler(
 // ============================================================
 export const changePasswordHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = getUserId(req);
     const { currentPassword, newPassword } = req.body;
 
     const result = await changePassword(userId, currentPassword, newPassword);

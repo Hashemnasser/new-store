@@ -45,7 +45,6 @@ export async function registerUser(
 
   // 4. إنشاء توكن JWT
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
-
   // 5. إرجاع المستخدم (بدون كلمة المرور) مع التوكن
   const { password: _, ...userWithoutPassword } = user;
   return { user: userWithoutPassword, token };
@@ -109,21 +108,27 @@ export async function updateProfile(
   userId: string,
   data: { name?: string; image?: string }
 ) {
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      image: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-
-  return user;
+  try {
+    return await prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  } catch (error: any) {
+    // P2025 معناها السجل مش موجود
+    if (error.code === "P2025") {
+      throw createError("NOT_FOUND", "User not found");
+    }
+    throw error; // أي خطأ تاني
+  }
 }
 
 /**
@@ -210,7 +215,7 @@ export async function requestPasswordReset(email: string) {
     `,
   });
 
-  return { message: "Reset link sent to your email." };
+  return { message: "If your email exists, you will receive a reset link." };
 }
 
 // ✅ دالة إعادة تعيين كلمة المرور (باستخدام التوكن)

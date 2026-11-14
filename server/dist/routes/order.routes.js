@@ -12,12 +12,13 @@ const router = (0, express_1.Router)();
 // ============================================================
 router.use(auth_middleware_1.authMiddleware);
 router.get("/", order_controller_1.getUserOrdersHandler);
-router.get("/:id", order_controller_1.getOrderByIdHandler);
+router.get("/:id", order_controller_1.getOrderByIdHandler); // لازم المسار المتغير يوضع بعد المسار الثابت لان اذا وضع قبل لا يمكن الوصول للمسار الثابت
 router.post("/", (0, validate_middleware_1.validate)(order_validator_1.createOrderSchema), order_controller_1.createOrderHandler);
 // ============================================================
 // 🔐 مسارات المدير (تتطلب مصادقة + صلاحيات مدير)
 // ============================================================
-router.get("/admin/all", auth_middleware_1.adminMiddleware, order_controller_1.getAllOrdersHandler);
-router.patch("/admin/:id/status", auth_middleware_1.adminMiddleware, (0, validate_middleware_1.validate)(order_validator_1.updateOrderStatusSchema), order_controller_1.updateOrderStatusHandler);
-router.delete("/admin/:id", auth_middleware_1.adminMiddleware, order_controller_1.deleteOrderByIdHandler);
+router.use(auth_middleware_1.adminMiddleware);
+router.get("/admin/all", order_controller_1.getAllOrdersHandler); //  router.get("/:id", getOrderByIdHandler)لو كان المسار من مقطع واحد كان يجب وضعه فوق
+router.patch("/admin/:id/status", (0, validate_middleware_1.validate)(order_validator_1.updateOrderStatusSchema), order_controller_1.updateOrderStatusHandler);
+router.delete("/admin/:id", order_controller_1.deleteOrderByIdHandler);
 exports.default = router;

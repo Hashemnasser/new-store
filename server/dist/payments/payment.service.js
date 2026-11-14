@@ -110,12 +110,16 @@ exports.paymentService = {
                         where: { orderId: event.orderId },
                         include: { variant: true },
                     });
-                    for (const item of orderItems) {
-                        await tx.productVariant.update({
-                            where: { id: item.variantId },
-                            data: { stock: { increment: item.quantity } },
-                        });
-                    }
+                    // for (const item of orderItems) {
+                    //   await tx.productVariant.update({
+                    //     where: { id: item.variantId },
+                    //     data: { stock: { increment: item.quantity } },
+                    //   });
+                    // }
+                    await Promise.all(orderItems.map((item) => tx.productVariant.update({
+                        where: { id: item.variantId },
+                        data: { stock: { increment: item.quantity } },
+                    })));
                     await tx.order.update({
                         where: { id: event.orderId },
                         data: { status: enums_1.OrderStatus.CANCELLED },
@@ -125,10 +129,15 @@ exports.paymentService = {
                 break;
             }
             case "REFUNDED": {
-                await prisma_1.prisma.order.update({
-                    where: { id: event.orderId },
-                    data: { status: enums_1.OrderStatus.CANCELLED },
+                const order = await prisma_1.prisma.order.findFirst({
+                    where: { stripePaymentIntentId: event.paymentId },
                 });
+                if (order) {
+                    await prisma_1.prisma.order.update({
+                        where: { id: order.id },
+                        data: { status: enums_1.OrderStatus.CANCELLED },
+                    });
+                }
                 break;
             }
             default:
@@ -141,5 +150,13 @@ exports.paymentService = {
      */
     getAvailableGateways() {
         return payment_provider_factory_1.paymentProviderFactory.getEnabledNames();
+    },
+    async createPaymentIntent(params) {
+        return this.createPayment({
+            gateway: "stripe",
+            amount: params.amount,
+            currency: params.currency,
+            orderId: params.orderId,
+        });
     },
 };

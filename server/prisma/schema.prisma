@@ -60,7 +60,7 @@ model Cart {
   @@map("carts")
 }
 
-model CartItem {
+model CartItem {   
   id        String    @id @default(cuid())
   cartId    String
   productId String
@@ -112,8 +112,9 @@ model Product {
   wishlistItems WishlistItem[]
 
   @@index([categoryId])
-  @@index([slug])
-  @@map("products")
+     @@index([slug]) // فهرسة لسهولة البحث/
+  @@map("products")    //"products"من اجل اخبار بريزما انني اريد ان يكون اسم العمود في الداتابيس هو
+
 }
 
 

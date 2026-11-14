@@ -32,11 +32,9 @@ export const useCart = () => {
   } = useQuery({
     queryKey: ["cart"],
     queryFn: async () => {
-      const data = await cartApi.getCart();
-      const cartData = data.data;
+      const cartData = await cartApi.getCart().then((data) => data.data);
+
       setCart(cartData); // تحديث الـ Store المحلي
-      console.log("cartData2222@@::", cartData);
-      console.log("items####", total);
 
       return cartData;
     },

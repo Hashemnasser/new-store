@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getProductReviews = getProductReviews;
 exports.getUserReviews = getUserReviews;
 exports.getReviewById = getReviewById;
+exports.updateProductRating = updateProductRating;
 exports.createReview = createReview;
 exports.updateReview = updateReview;
 exports.deleteReview = deleteReview;
@@ -81,16 +82,19 @@ async function getReviewById(reviewId, userId) {
     }
     return review;
 }
-async function updateProductRating(productId) {
-    // حساب متوسط التقييمات وعددها
-    const result = await prisma_1.prisma.review.aggregate({
+// نمرر tx كبارامتر اختياري، عشان لو استدعيناها برا ترانزأكشن تشتغل بـ prisma العادي
+async function updateProductRating(productId, tx = prisma_1.prisma) {
+    // 1. حساب المتوسط والعدد باستخدام الـ tx
+    const result = await tx.review.aggregate({
         where: { productId },
         _avg: { rating: true },
         _count: { rating: true },
     });
-    const averageRating = result._avg.rating ?? 0;
+    // 2. تأكيد إن القيمة رقم، وإذا ما في تقييمات خليها صفر
+    const averageRating = Number(result._avg.rating ?? 0);
     const reviewsCount = result._count.rating ?? 0;
-    await prisma_1.prisma.product.update({
+    // 3. تحديث المنتج
+    await tx.product.update({
         where: { id: productId },
         data: {
             averageRating,
@@ -100,34 +104,34 @@ async function updateProductRating(productId) {
 }
 async function createReview(userId, data) {
     const { productId, rating, comment } = data;
-    // 1. التحقق من وجود المنتج
+    // 1. التحقق من وجود المنتج (هون عادي نستخدم prisma العادي)
     const product = await prisma_1.prisma.product.findUnique({
         where: { id: productId },
     });
     if (!product) {
         throw (0, app_error_1.createError)("NOT_FOUND", "Product not found");
     }
-    // 2. التحقق من أن المستخدم لم يقيّم هذا المنتج من قبل
     try {
-        const review = await prisma_1.prisma.review.create({
-            data: {
-                userId,
-                productId,
-                rating,
-                comment,
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        image: true,
+        // ✅ نبدأ الترانزأكشن
+        const review = await prisma_1.prisma.$transaction(async (tx) => {
+            // 2. إنشاء التقييم داخل الترانزأكشن
+            const newReview = await tx.review.create({
+                data: {
+                    userId,
+                    productId,
+                    rating,
+                    comment,
+                },
+                include: {
+                    user: {
+                        select: { id: true, name: true, image: true },
                     },
                 },
-            },
+            });
+            // 3. تحديث متوسط التقييم داخل نفس الترانزأكشن
+            await updateProductRating(productId, tx);
+            return newReview; // نرجع التقييم عشان نستخدمه برا
         });
-        // 3. تحديث متوسط التقييمات للمنتج
-        await updateProductRating(productId);
         return review;
     }
     catch (error) {
@@ -135,7 +139,7 @@ async function createReview(userId, data) {
             error.code === "P2002") {
             throw (0, app_error_1.createError)("CONFLICT", "You have already reviewed this product");
         }
-        throw error;
+        throw error; // أي خطأ تاني بيرجع للـ Global Error Handler
     }
 }
 async function updateReview(userId, reviewId, data) {

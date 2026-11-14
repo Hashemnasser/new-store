@@ -2,6 +2,7 @@
 // src/validators/order.validator.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateOrderStatusSchema = exports.createOrderSchema = void 0;
+const enums_1 = require("../generated/prisma/enums.js");
 const zod_1 = require("zod");
 exports.createOrderSchema = zod_1.z.object({
     shippingAddress: zod_1.z.object({
@@ -14,11 +15,5 @@ exports.createOrderSchema = zod_1.z.object({
     couponCode: zod_1.z.string().optional(), // ✅ أضف هذا
 });
 exports.updateOrderStatusSchema = zod_1.z.object({
-    status: zod_1.z.enum([
-        "PENDING",
-        "PROCESSING",
-        "SHIPPED",
-        "DELIVERED",
-        "CANCELLED",
-    ]),
+    status: zod_1.z.enum(enums_1.OrderStatus),
 });

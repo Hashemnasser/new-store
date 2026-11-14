@@ -19,7 +19,7 @@ exports.getCurrentUserHandler = (0, asyncHandler_1.asyncHandler)(async (req, res
 });
 exports.updateCurrentUserHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     const userId = (0, request_helpers_1.getUserId)(req);
-    const data = (0, request_helpers_1.getValidatedBody)(req, user_validator_1.updateUserSchema);
+    const data = req.body;
     const user = await (0, user_service_1.updateUser)(userId, data);
     res.json({
         success: true,
@@ -49,23 +49,23 @@ exports.deleteCurrentUserHandler = (0, asyncHandler_1.asyncHandler)(async (req, 
 // 🔐 دوال المدير (Admin) - إدارة جميع المستخدمين
 // ============================================================
 exports.getAllUsersHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    // const page = parseInt(req.query.page as string) || 1;
+    // const limit = parseInt(req.query.limit as string) || 10;
+    const { page, limit } = user_validator_1.querySchema.parse(req.query);
     const result = await (0, user_service_1.getAllUsers)(page, limit);
-    console.log("all users", result);
     res.json({
         success: true,
         data: result.users,
         pagination: {
             total: result.total,
             page: result.page,
-            limit: result.limit,
+            limit,
             totalPages: result.totalPages,
         },
     });
 });
 exports.getUserByIdHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    const { id } = (0, request_helpers_1.getValidatedParams)(req, request_helpers_1.idParamsSchema);
+    const { id } = request_helpers_1.idParamsSchema.parse(req.params);
     const user = await (0, user_service_1.getUserById)(id);
     res.json({
         success: true,
@@ -73,8 +73,8 @@ exports.getUserByIdHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) =
     });
 });
 exports.updateUserByIdHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    const { id } = (0, request_helpers_1.getValidatedParams)(req, request_helpers_1.idParamsSchema);
-    const data = (0, request_helpers_1.getValidatedBody)(req, user_validator_1.updateUserSchema);
+    const { id } = request_helpers_1.idParamsSchema.parse(req);
+    const data = req.body;
     const user = await (0, user_service_1.updateUser)(id, data);
     res.json({
         success: true,
@@ -83,17 +83,17 @@ exports.updateUserByIdHandler = (0, asyncHandler_1.asyncHandler)(async (req, res
     });
 });
 exports.deleteUserByIdHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    const { id } = (0, request_helpers_1.getValidatedParams)(req, request_helpers_1.idParamsSchema);
-    // لا نمرر currentUserId، لأن المدير يمكنه حذف أي مستخدم (مع منع حذف المدير الوحيد)
-    const result = await (0, user_service_1.deleteUser)(id);
+    const { id } = request_helpers_1.idParamsSchema.parse(req.params);
+    const userId = (0, request_helpers_1.getUserId)(req);
+    const result = await (0, user_service_1.deleteUser)(id, userId);
     res.json({
         success: true,
         ...result,
     });
 });
 exports.changeUserRoleHandler = (0, asyncHandler_1.asyncHandler)(async (req, res) => {
-    const { id } = (0, request_helpers_1.getValidatedParams)(req, request_helpers_1.idParamsSchema);
-    const data = (0, request_helpers_1.getValidatedBody)(req, user_validator_1.changeUserRoleSchema);
+    const { id } = request_helpers_1.idParamsSchema.parse(req.params);
+    const data = req.body;
     const user = await (0, user_service_1.changeUserRole)(id, data);
     res.json({
         success: true,

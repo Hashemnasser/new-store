@@ -1,7 +1,9 @@
 // src/features/users/hooks/useUsers.ts
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuthStore } from "../../../store/auth.store";
 import type { User } from "../../../types/common.types";
 import { usersApi } from "../api/users.api";
 
@@ -56,6 +58,38 @@ export const useDeleteUser = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message || "حدث خطأ أثناء حذف المستخدم");
+    },
+  });
+};
+
+export const useDeleteCurrentUser = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // افترض إنك عندك Store لإدارة حالة المستخدم (زي Zustand أو Redux أو Context)
+  const logout = useAuthStore((state) => state.logout);
+
+  return useMutation<{ message: string }, Error, void>({
+    // ✅ لاحظ: ما في userId هون، الدالة ما بتاخد باراميتر
+    mutationFn: () => usersApi.deleteCurrentUser(),
+
+    onSuccess: (data) => {
+      toast.success(data.message || "تم حذف حسابك بنجاح");
+
+      // 🚨 خطوات لاااااازم تصير:
+
+      // 1. تنظيف الكاش (مسح كل بيانات المستخدم من الذاكرة)
+      queryClient.clear();
+
+      // 2. تسجيل الخروج (مسح التوكن من الـ LocalStorage/Cookies)
+      logout();
+
+      // 3. تحويل المستخدم لصفحة تسجيل الدخول أو الرئيسية
+      navigate("/");
+    },
+
+    onError: (error: Error) => {
+      toast.error(error.message || "حدث خطأ أثناء حذف الحساب");
     },
   });
 };

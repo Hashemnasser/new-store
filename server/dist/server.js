@@ -14,10 +14,10 @@ const routes_1 = __importDefault(require("./routes"));
 // dotenv.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5000;
+// ⚠️ يجب تركيب Webhook قبل express.json() للحصول على Raw Body
 app.use("/api/webhooks", webhook_routes_1.default);
 // Middleware
 app.use((0, cors_1.default)());
-// ⚠️ يجب تركيب Webhook قبل express.json() للحصول على Raw Body
 app.use(express_1.default.json());
 // Routes
 app.use("/api", routes_1.default);

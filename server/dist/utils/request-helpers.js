@@ -9,13 +9,13 @@ const zod_1 = require("zod");
 const app_error_1 = require("../errors/app-error");
 // ✅ مخططات موحدة لمعاملات المسار (Params)
 exports.idParamsSchema = zod_1.z.object({
-    id: zod_1.z.string().min(1, "ID is required"),
+    id: zod_1.z.cuid2().min(1, "ID is required"),
 });
 exports.productIdParamsSchema = zod_1.z.object({
-    productId: zod_1.z.string().min(1, "Product ID is required"),
+    productId: zod_1.z.cuid2().min(1, "Product ID is required"),
 });
 exports.reviewIdParamsSchema = zod_1.z.object({
-    reviewId: zod_1.z.string().min(1, "Review ID is required"),
+    reviewId: zod_1.z.cuid2().min(1, "Review ID is required"),
 });
 // ✅ دالة مساعدة للحصول على userId بأمان
 function getUserId(req) {

@@ -7,12 +7,16 @@ import { z } from "zod";
 // ============================================================
 
 const envSchema = z.object({
-  VITE_API_URL: z.string().url().default("http://localhost:5000/api"),
+  VITE_API_URL: z.url().default("http://localhost:5000/api"),
   VITE_APP_NAME: z.string().default("ProStore"),
   VITE_APP_VERSION: z.string().default("1.0.0"),
   VITE_NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+  // ✅ أضفنا المفتاح
+  VITE_STRIPE_PUBLISHABLE_KEY: z
+    .string()
+    .startsWith("pk_", "Stripe Publishable Key must start with 'pk_'"),
 });
 
 // ============================================================
@@ -39,3 +43,4 @@ export const API_URL = env.VITE_API_URL;
 export const APP_NAME = env.VITE_APP_NAME;
 export const APP_VERSION = env.VITE_APP_VERSION;
 export const NODE_ENV = env.VITE_NODE_ENV;
+export const STRIPE_PUBLISHABLE_KEY = env.VITE_STRIPE_PUBLISHABLE_KEY; // ✅ أضفنا

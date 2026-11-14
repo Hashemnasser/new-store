@@ -24,19 +24,20 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get("/", getUserOrdersHandler);
-router.get("/:id", getOrderByIdHandler);
+router.get("/:id", getOrderByIdHandler); // لازم المسار المتغير يوضع بعد المسار الثابت لان اذا وضع قبل لا يمكن الوصول للمسار الثابت
 router.post("/", validate(createOrderSchema), createOrderHandler);
 
 // ============================================================
 // 🔐 مسارات المدير (تتطلب مصادقة + صلاحيات مدير)
 // ============================================================
-router.get("/admin/all", adminMiddleware, getAllOrdersHandler);
+router.use(adminMiddleware);
+
+router.get("/admin/all", getAllOrdersHandler); //  router.get("/:id", getOrderByIdHandler)لو كان المسار من مقطع واحد كان يجب وضعه فوق
 router.patch(
   "/admin/:id/status",
-  adminMiddleware,
   validate(updateOrderStatusSchema),
   updateOrderStatusHandler
 );
-router.delete("/admin/:id", adminMiddleware, deleteOrderByIdHandler);
+router.delete("/admin/:id", deleteOrderByIdHandler);
 
 export default router;

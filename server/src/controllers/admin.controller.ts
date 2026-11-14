@@ -1,7 +1,9 @@
+import { ReplenishStock } from "./../validators/admin.validator";
 // src/controllers/admin.controller.ts
 
 import { createError } from "@/errors/app-error";
 import { Request, Response } from "express";
+import z from "zod";
 import {
   getDashboardStats,
   getLowStockProducts,
@@ -11,7 +13,7 @@ import {
 import { asyncHandler } from "../utils/asyncHandler";
 
 export const getDashboardStatsHandler = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (_req: Request, res: Response) => {
     const stats = await getDashboardStats();
 
     res.json({
@@ -51,17 +53,15 @@ export const getLowStockProductsHandler = asyncHandler(
 export const replenishStockHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { variantId } = req.params;
-    const { quantity = 10 } = req.body; // الكمية المضافة (افتراضي 10)
+    const { quantity }: ReplenishStock = req.body; // (الـ body صار مفحوص بـ Zod)
 
-    if (!variantId) {
-      throw createError("BAD_REQUEST", "Variant ID is required");
+    // فحص يدوي للـ Params (بس هالمرة استخدم Zod عشان ما تكرر if)
+    const parsedId = z.cuid2("Invalid variant ID").safeParse(variantId);
+    if (!parsedId.success) {
+      throw createError("BAD_REQUEST", parsedId.error.issues[0].message);
     }
 
-    if (quantity <= 0) {
-      throw createError("BAD_REQUEST", "Quantity must be greater than 0");
-    }
-
-    const result = await replenishStock(variantId as string, quantity);
+    const result = await replenishStock(parsedId.data, quantity);
 
     res.json({
       success: true,

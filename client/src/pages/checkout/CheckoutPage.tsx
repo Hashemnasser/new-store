@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Elements } from "@stripe/react-stripe-js";
+import axios from "axios";
 import { motion } from "framer-motion";
 import { ArrowLeft, CreditCard, Tag, Truck, X } from "lucide-react";
 import { useState } from "react";
@@ -17,7 +18,7 @@ import { useValidateCoupon } from "../../features/coupons/hooks/useCoupons";
 import type { ValidateCouponRequest } from "../../features/coupons/types/coupon.types";
 import { useCreateOrder } from "../../features/orders/hooks/useOrders";
 import type { CreateOrderPayload } from "../../features/orders/types/order.types";
-import { stripePromise } from "../../lib/stripe";
+import { stripeAppearance, stripePromise } from "../../lib/stripe";
 import { formatCurrency } from "../../utils/currency";
 import { isEmpty } from "../../utils/helpers";
 
@@ -55,7 +56,7 @@ export const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
-  const [isCouponLoading, setIsCouponLoading] = useState(false);
+  // const [isCouponLoading, setIsCouponLoading] = useState(false);
 
   // ✅ حالات الدفع الإلكتروني
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -123,7 +124,6 @@ export const CheckoutPage = () => {
       return;
     }
 
-    setIsCouponLoading(true);
     try {
       const payload: ValidateCouponRequest = {
         code: trimmedCode.toUpperCase(),
@@ -149,19 +149,19 @@ export const CheckoutPage = () => {
         setAppliedCoupon(null);
         setCouponDiscount(0);
       }
-    } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "حدث خطأ أثناء التحقق من الكوبون";
-      toast.error(errorMessage);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || "Something went wrong");
+      } else if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred ");
+      }
+
       setAppliedCoupon(null);
       setCouponDiscount(0);
-    } finally {
-      setIsCouponLoading(false);
     }
   };
-
   // ============================================================
   // ✅ دالة إزالة الكوبون
   // ============================================================
@@ -196,7 +196,6 @@ export const CheckoutPage = () => {
       // ✅ بنية الاستجابة: { success, message, data: { order, paymentResult } }
       const paymentResult = result.data?.paymentResult;
       const order = result.data?.order;
-
       // ✅ إذا كان الدفع إلكترونياً (Stripe)
       if (paymentResult?.clientSecret) {
         setClientSecret(paymentResult.clientSecret);
@@ -247,12 +246,7 @@ export const CheckoutPage = () => {
                   stripe={stripePromise}
                   options={{
                     clientSecret,
-                    appearance: {
-                      theme: "stripe",
-                      variables: {
-                        colorPrimary: "#2563eb",
-                      },
-                    },
+                    appearance: stripeAppearance,
                   }}
                 >
                   <CheckoutForm orderId={orderId!} />
@@ -439,10 +433,12 @@ export const CheckoutPage = () => {
                       <button
                         type="button"
                         onClick={handleApplyCoupon}
-                        disabled={isCouponLoading || !couponCode?.trim()}
+                        disabled={
+                          validateCoupon.isPending || !couponCode?.trim()
+                        }
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50 flex items-center gap-1"
                       >
-                        {isCouponLoading ? (
+                        {validateCoupon.isPending ? (
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         ) : (
                           "تطبيق"
@@ -494,6 +490,7 @@ export const CheckoutPage = () => {
                     <img
                       src={
                         item.product.images.find((img) => img.isPrimary)?.url ||
+                        item.product.images[0].url ||
                         "/images/placeholder.png"
                       }
                       alt={item.product.title}

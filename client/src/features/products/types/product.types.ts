@@ -12,7 +12,7 @@ export interface ProductImage {
   url: string;
   alt: string | null;
   order: number;
-  isPrimary: boolean;
+  isPrimary?: boolean;
 }
 
 export interface ProductVariant {

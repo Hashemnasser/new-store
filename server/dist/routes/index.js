@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const payment_routes_1 = __importDefault(require("../payments/payment.routes"));
 const admin_routes_1 = __importDefault(require("./admin.routes"));
 const auth_routes_1 = __importDefault(require("./auth.routes"));
 const cart_routes_1 = __importDefault(require("./cart.routes"));
@@ -27,6 +28,7 @@ router.use("/admin", admin_routes_1.default);
 router.use("/auth", auth_routes_1.default);
 router.use("/admin/coupons", coupon_routes_1.default);
 router.use("/coupons", coupon_routes_1.default);
+router.use("/payments", payment_routes_1.default); // ✅ جديد
 exports.default = router;
 // // ✅ عند إضافة مسارات جديدة
 // import authRoutes from "./auth.routes";

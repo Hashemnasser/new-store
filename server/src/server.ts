@@ -11,11 +11,11 @@ import routes from "./routes";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ⚠️ يجب تركيب Webhook قبل express.json() للحصول على Raw Body
 app.use("/api/webhooks", webhookRoutes);
 // Middleware
 app.use(cors());
 
-// ⚠️ يجب تركيب Webhook قبل express.json() للحصول على Raw Body
 app.use(express.json());
 
 // Routes

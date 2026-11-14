@@ -182,7 +182,9 @@ export const OrderDetailsPage = () => {
                         src={
                           item.variant.product.images.find(
                             (img) => img.isPrimary
-                          )?.url || "/images/placeholder.png"
+                          )?.url ||
+                          item.variant.product.images[0].url ||
+                          "/images/placeholder.png"
                         }
                         alt={item.variant.product.title}
                         className="w-16 h-16 object-cover rounded-lg bg-gray-100 dark:bg-gray-700 shrink-0"

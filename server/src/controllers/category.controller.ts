@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 
+import { CreateCategory } from "@/validators/category.validator";
 import { idParamsSchema } from "@/validators/product.validator";
 import {
   createCategory,
@@ -22,7 +23,7 @@ export const getCategories = asyncHandler(
 
 export const storeCategory = asyncHandler(
   async (req: Request, res: Response) => {
-    const { name } = req.body;
+    const { name }: CreateCategory = req.body;
 
     const category = await createCategory(name);
 
@@ -37,7 +38,7 @@ export const updateCategory = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = idParamsSchema.parse(req.params);
 
-    const { name } = req.body;
+    const { name }: CreateCategory = req.body;
     const updatedCategory = await editCategory(id, name);
 
     res.json({

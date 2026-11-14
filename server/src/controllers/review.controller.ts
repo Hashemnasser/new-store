@@ -1,8 +1,11 @@
 // src/controllers/review.controller.ts
 
-import { createError } from "@/errors/app-error";
+import {
+  getUserId,
+  idParamsSchema,
+  productIdParamsSchema,
+} from "@/utils/request-helpers";
 import { Request, Response } from "express";
-import z from "zod";
 import {
   createReview,
   deleteReview,
@@ -15,21 +18,13 @@ import {
 } from "../services/review.service";
 import { asyncHandler } from "../utils/asyncHandler";
 import {
+  UpdateReviewInput,
   createReviewSchema,
-  updateReviewSchema,
 } from "../validators/review.validator";
 
 // ============================================================
 // 👤 دوال المستخدم
 // ============================================================
-
-const idParamsSchema = z.object({
-  id: z.string(),
-});
-
-const productIdParamsSchema = z.object({
-  productId: z.string(),
-});
 
 export const getProductReviewsHandler = asyncHandler(
   async (req: Request, res: Response) => {
@@ -46,11 +41,7 @@ export const getProductReviewsHandler = asyncHandler(
 
 export const getUserReviewsHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = getUserId(req);
 
     const reviews = await getUserReviews(userId);
 
@@ -63,11 +54,7 @@ export const getUserReviewsHandler = asyncHandler(
 
 export const getReviewByIdHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = getUserId(req);
     const { id } = idParamsSchema.parse(req.params);
 
     const review = await getReviewById(id, userId);
@@ -81,11 +68,7 @@ export const getReviewByIdHandler = asyncHandler(
 
 export const createReviewHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = getUserId(req);
     const data = createReviewSchema.parse(req.body);
 
     const review = await createReview(userId, data);
@@ -100,13 +83,9 @@ export const createReviewHandler = asyncHandler(
 
 export const updateReviewHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = getUserId(req);
     const { id } = idParamsSchema.parse(req.params);
-    const data = updateReviewSchema.parse(req.body);
+    const data: UpdateReviewInput = req.body;
 
     const review = await updateReview(userId, id, data);
 
@@ -120,11 +99,7 @@ export const updateReviewHandler = asyncHandler(
 
 export const deleteReviewHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    // ✅ التحقق من وجود req.user
-    if (!req.user || !req.user.id) {
-      throw createError("UNAUTHORIZED", "User not authenticated");
-    }
-    const userId = req.user.id;
+    const userId = getUserId(req);
 
     const { id } = idParamsSchema.parse(req.params);
 

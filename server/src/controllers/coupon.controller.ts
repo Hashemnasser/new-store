@@ -1,6 +1,7 @@
 // server/src/controllers/coupon.controller.ts
 
 import { createError } from "@/errors/app-error";
+import { CreateCoupon } from "@/validators/coupon.validator";
 import { idParamsSchema } from "@/validators/product.validator";
 import { Decimal } from "@prisma/client/runtime/library";
 import { Request, Response } from "express";
@@ -36,14 +37,9 @@ export const getCouponByIdHandler = asyncHandler(
 
 export const createCouponHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const data = req.body;
-    // تحويل التواريخ من string إلى Date
-    const couponData = {
-      ...data,
-      startsAt: new Date(data.startsAt),
-      expiresAt: new Date(data.expiresAt),
-    };
-    const coupon = await createCoupon(couponData);
+    const data: CreateCoupon = req.body;
+
+    const coupon = await createCoupon(data);
     res.status(201).json({ success: true, data: coupon });
   }
 );
@@ -93,7 +89,7 @@ export const validateCouponHandler = asyncHandler(
       success: true,
       data: {
         code: coupon.code,
-        discountAmount: discountAmount,
+        discountAmount,
         discountType: coupon.discountType,
         discountValue: coupon.discountValue,
         message: `تم تطبيق الخصم بنجاح!`,

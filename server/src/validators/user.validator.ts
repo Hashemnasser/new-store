@@ -12,8 +12,8 @@ export const changeUserRoleSchema = z.object({
 
 export const updateUserSchema = z.object({
   name: z.string().trim().min(2).max(50).optional(),
-  email: z.string().email().optional(),
-  image: z.string().url().optional(),
+  email: z.email().optional(),
+  image: z.url().optional(),
 });
 
 export const changeUserPasswordSchema = z.object({
@@ -25,3 +25,18 @@ export const changeUserPasswordSchema = z.object({
 export type ChangeUserRoleInput = z.infer<typeof changeUserRoleSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type ChangeUserPasswordInput = z.infer<typeof changeUserPasswordSchema>;
+
+export const querySchema = z.object({
+  limit: z.coerce
+    .number()
+    .int("Limit must be an integer")
+    .positive("Limit must be positive")
+    .default(12),
+
+  // 5. رقم الصفحة (نفس الفكرة، وإذا ما بعت بيصير 1)
+  page: z.coerce
+    .number()
+    .int("Page must be an integer")
+    .positive("Page must be positive")
+    .default(1),
+});
