@@ -467,7 +467,8 @@ import { formatCurrency } from "../../utils/currency";
 export const AdminDashboardPage = () => {
   const { t } = useTranslation();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
-  const { data: analytics, isLoading: analyticsLoading } = useSalesAnalytics();
+  const { data: analytics, isLoading: analyticsLoading } =
+    useSalesAnalytics(25);
   const { data: lowStockData, isLoading: lowStockLoading } =
     useLowStockProducts(5);
 
@@ -607,7 +608,7 @@ export const AdminDashboardPage = () => {
         </div>
 
         {/* الرسوم البيانية */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid  gap-6 mb-6  ">
           <RevenueChart data={analyticsData} isLoading={analyticsLoading} />
           <TopProducts
             products={statsData.topProducts ?? []}

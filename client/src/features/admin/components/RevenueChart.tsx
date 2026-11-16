@@ -16,7 +16,6 @@ export const RevenueChart = ({
   data,
   isLoading = false,
 }: RevenueChartProps) => {
-  console.log("data.............::::", data);
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -48,7 +47,7 @@ export const RevenueChart = ({
         </span>
       </div>
 
-      <div className="h-48 flex items-end gap-1">
+      <div className="h-48 flex items-end justify-end gap-1 ">
         {salesData?.map((point, index) => {
           const height = (point.total / maxValue) * 100;
           const date = new Date(point.date);
@@ -60,7 +59,7 @@ export const RevenueChart = ({
               initial={{ height: 0 }}
               animate={{ height: `${height}%` }}
               transition={{ duration: 0.5, delay: index * 0.05 }}
-              className="flex-1 flex flex-col items-center justify-end"
+              className=" flex flex-col items-center justify-end"
             >
               <div
                 className="w-full max-w-10 bg-blue-500 hover:bg-blue-600 rounded-t transition-colors relative group"
@@ -70,7 +69,7 @@ export const RevenueChart = ({
                   ${point.total.toFixed(0)}
                 </div>
               </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 ">
                 {dayName}
               </span>
             </motion.div>
